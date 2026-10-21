@@ -6111,8 +6111,10 @@ function candCard(c,i,sel){return `<button class="cand gf-${c.gender} ${sel?'sel
   <div>${rootChips(c.root)}</div><div>${c.fates.map(k=>`<span class="fate">${FATES[k].n}</span>`).join('')}</div><p class="fdesc">${c.fates.map(k=>FATES[k].d).join('；')}</p><p class="imp">印象：${MB[c.mbti].imp}</p></button>`}
 // 宗门大比
 let TJOIN=true;
-function openTourney(e){const ds=presentDs();modal({title:'宗门大比',html:`<p class="prose">三月初一，宗门大比。弟子组凡在门弟子必须参加；长老组自愿报名。</p>
-  <div class="blk"><h4>参赛弟子（${ds.length}人）</h4>${ds.length?ds.map(d=>`<span class="fate" style="border-color:var(--line);color:var(--ink)">${d.name} · 战力${dPower(d)}</span>`).join(''):'<span class="hint">门下无人在山上</span>'}</div>
+const TOURNEY_CAP=20;// 元婴初期起不再参加弟子组
+function openTourney(e){const all=presentDs(),ds=all.filter(d=>d.realm<TOURNEY_CAP),wt=all.filter(d=>d.realm>=TOURNEY_CAP);modal({title:'宗门大比',html:`<p class="prose">三月初一，宗门大比。弟子组凡在门弟子必须参加（已结元婴者除外）；长老组自愿报名。</p>
+  <div class="blk"><h4>参赛弟子（${ds.length}人）</h4>${ds.length?ds.map(d=>`<span class="fate" style="border-color:var(--line);color:var(--ink)">${d.name} · 战力${dPower(d)}</span>`).join(''):`<span class="hint">${all.length?'门下无人符合弟子组参赛条件':'门下无人在山上'}</span>`}</div>
+  ${wt.length?`<div class="blk"><h4>观战弟子（${wt.length}人）</h4>${wt.map(d=>`<span class="fate" style="border-color:var(--line);color:var(--ink2,var(--ink));opacity:.75">${d.name} · ${REALMS[d.realm]}</span>`).join('')}<p class="hint">修为已至元婴，不宜再与同门晚辈同台较技；又非长老，不入长老组。此番只在看台观战。</p></div>`:''}
   <div class="blk"><h4>长老组</h4><div class="goals"><button class="${TJOIN?'on':''}" onclick="TJOIN=true;openTourney(G.events.find(x=>x.k==='tourney'))">报名参加（战力 ${pPower()}）</button><button class="${!TJOIN?'on':''}" onclick="TJOIN=false;openTourney(G.events.find(x=>x.k==='tourney'))">不参加</button></div></div>
   <p class="hint">名次好有KPI与奖励，名次差会扣KPI。</p>`,btns:[{t:'稍后',fn:closeModal},{t:'开赛',cls:'pri',fn:()=>runTourney(e)}]})}
 function runTourney(e){e.done=true;endEvent(e);const ds=presentDs();let kpi=0;const rows=ds.map(d=>{const score=dPower(d)*(.8+R()*.45);const base=basePow(4+(d.age-13)*1.4);let t;
@@ -6824,7 +6826,8 @@ EV.naming=e=>{const d=getD(e.id);if(!d||d.status!=='home')return nextEvent();
 // —— 宗门大比：只有一位魁首；甲乙丙等 + 不入流 ——
 const TIER_N=['魁首','甲等','乙等','丙等','不入流'];
 function rankField(entries,T){entries.forEach(x=>{x.tier=x.score>=T[1]?1:x.score>=T[2]?2:x.score>=T[3]?3:4});const el=entries.filter(x=>x.score>=T[0]).sort((a,b)=>(b.realm-a.realm)||(b.score-a.score));if(el.length)el[0].tier=0;return el[0]||null}
-function tourneyDisciples(ds){let kpi=0;const T=[basePow(17),basePow(13),basePow(8),basePow(4)];ds.forEach(dUseSw);const en=ds.map(d=>({d,realm:d.realm,score:dPower(d)*(.85+R()*.3)}));rankField(en,T);
+function tourneyDisciples(ds){const wt=ds.filter(d=>d.realm>=TOURNEY_CAP);ds=ds.filter(d=>d.realm<TOURNEY_CAP);const r=tourneyDisciples0(ds);wt.forEach(d=>{logD(d,'宗门大比：修为已至元婴，不再参加弟子组，在看台观战。');r.rows.push(`<li><b>${d.name}</b>：修为过高（${REALMS[d.realm]}），不宜参赛，在看台观战</li>`)});return r}
+function tourneyDisciples0(ds){let kpi=0;const T=[basePow(17),basePow(13),basePow(8),basePow(4)];ds.forEach(dUseSw);const en=ds.map(d=>({d,realm:d.realm,score:dPower(d)*(.85+R()*.3)}));rankField(en,T);
   const rows=en.map(({d,tier})=>{let t;if(tier===0){kpi+=12;const k=randFaqi(Math.min(3,rollGrade(G.p.realm)+1));addItem(d.bag,k);t=`夺得魁首！宗门赏${itemInfo(k).name}`;d.mood+=15;d.favor+=5;unlock('dchamp')}
     else if(tier===1){kpi+=5;addItem(d.bag,'p:jq:1');t='甲等，得玄品聚气丹';d.mood+=8}else if(tier===2){kpi+=2;t='乙等';d.mood+=2}else if(tier===3){t='丙等';d.mood-=2}else{kpi-=4;t='不入流，首轮即败';d.mood-=10}
     clampD(d);logD(d,`宗门大比：${t}。`);return `<li><b>${d.name}</b>：${t}</li>`});return{rows,kpi}}
