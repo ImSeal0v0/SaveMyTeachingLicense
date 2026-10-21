@@ -1,4 +1,4 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
 <title>无情道教资保卫战</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -266,6 +266,8 @@ body.cave-3 .btn.big{background:linear-gradient(90deg,var(--ink),color-mix(in sr
 body.cave-3 .dcard{box-shadow:0 0 0 1px var(--gold)}
 @keyframes shine{from{background-position:150% 0}to{background-position:-100% 0}}
 input[type=range]{width:100%;accent-color:var(--jade)}
+.cave-up{border:1px solid var(--line);background:var(--paper2);color:var(--jade);border-radius:50%;width:22px;height:22px;font-size:10px;line-height:1;margin-left:6px;vertical-align:middle;padding:0}
+.cave-up:hover{border-color:var(--jade)}
 </style>
 <div id="app"></div>
 <div id="modal" hidden></div>
@@ -309,7 +311,7 @@ const PILLS={
   xs:{n:'洗髓丹',d:()=>'洗去一条灵根（剩一条时无效），自服或赠徒',p:150,days:300,only:3},
   yh:{n:'引魂香',d:()=>'清明、中元祭奠时焚之，铭记倍增',p:60,days:20,only:0},
   hc:{n:'回春丹',d:g=>`疗伤圣药：气血全满、百病尽消，可托飞鹤救急`,p:45,days:20},
-  qb:{n:'祛病丹',d:g=>'治愈病症，略回气血。筑基前的弟子常备',p:10,days:6},
+  qb:{n:'祛病丹',d:g=>'旧时的方子，略回气血（已不再出售）',p:10,days:6,hidden:true},
   zy:{n:'驻颜丹',d:g=>`容颜不老。赠徒心情 +${[15,25,40,60][g]}，好感略升`,p:30,days:20},
   zl:{n:'真言丹',d:g=>'赠徒服下后会吐露一句真心话（透露爱恋与心魔的大概）',p:50,days:25},
   yl:{n:'益灵丹',d:g=>`服下增加修为（当前境界所需的 ${[1,2,3,5][g]}%）`,p:35,days:20},
@@ -425,131 +427,9 @@ const GOALS={
   calm:{n:'静心养性',d:'平复心绪，修炼略慢',cult:-.1,mood:.1}
 };
 
-const SUR=SP(
-  // 古言、仙侠常见单姓
-  '沈|谢|顾|萧|苏|楚|江|陆|林|温|叶|白|秦|燕|裴|晏|宋|凌|祁|容|姜|孟|贺|纪|许|程|傅|陈|季|韩|唐|薛|钟|阮|穆|易|闻|岑|商|殷|卫|花|云|墨|'+
-  '柳|黎|蓝|连|曲|郁|宁|安|简|席|厉|司|封|君|冷|寒|凤|齐|虞|姬|荀|景|颜|洛|慕|华|明|时|祝|扶|乔|柏|梅|桑|秋|夏|元|尹|姚|舒|韦|霍|莫|徐|朱|周|李|王|张|吴|郑|杨|何|孙|魏|崔|袁|陶|葛|严|方|杜|任|罗|高|卢|戴|石|段|常|庄|邵|邱|邹|潘|董|梁|金|孔|曹|吕|赵|马|刘|'+
-
-  // 真实存在、适合仙侠玄幻的稀有单姓
-  '奚|郗|郦|邢|蒲|浦|胥|艾|宿|喻|宓|甄|桓|嵇|蔺|芮|邰|郜|鄢|邬|郝|缪|禹|屈|伍|狄|翟|竺|司|宫|羿|巫|宗|宣|惠|尚|晁|聂|蔚|阙|濮|臧|湛|郁|卞|茹|蔺|嵇|韶|越|苍|蓟|冀|郏|逄|莘|荆|仲|伊|栾|仇|祖|晏|容|慕|蒙|焦|卓|敖|邴|寇|宰|裘|解|怀|游|鱼|桂|符|索|印|薄|慎|衡|庾|雍|芦|苗|邓|黎|'+
-
-  // 经典复姓：古言世家、仙门、皇族
-  '慕容|上官|南宫|东方|独孤|欧阳|司徒|司马|诸葛|宇文|轩辕|百里|端木|令狐|皇甫|夏侯|长孙|公孙|闻人|钟离|澹台|赫连|尉迟|拓跋|鲜于|呼延|西门|东郭|申屠|淳于|濮阳|太叔|仲孙|公冶|公羊|司空|太史|乐正|漆雕|即墨|归海|徐离|宗政|闾丘|梁丘|左丘|微生|子桑|公仪|公良|公西|巫马|颛孙|段干|南门|东门|第五|'+
-
-  // 历史真实存在的少数民族姓氏
-  '纳兰|完颜|耶律'
-);
-const NM_M=SP(
-'无忧|惊澜|夜白|长歌|子期|怀瑾|临渊|砚舟|星河|聿|寒川|清晏|听澜|既白|承影|知意|九霄|不言|少卿|行舟|玄|烬|昭明|鹤归|墨染|景行|逸尘|凌霜|沉舟|归远|疏桐|千秋|御风|景渊|子衿|长卿|奕|珩|翊|澈|霁|清和|望舒|无涯|问天|寒舟|朝歌|惊蛰|晏之|怀远|止戈|浩然|云深|'+
-'无尘|无妄|无念|无情|无心|无羁|无咎|无双|无归|无极|无相|无渡|无霜|无眠|无恙|无涯|无虞|忘川|忘尘|忘机|忘忧|忘归|忘言|忘生|忘情|归尘|归墟|归鸿|归鹤|归舟|归云|归雪|归晚|归辞|归澜|归一|归寂|'+
-'长渊|长离|长珩|长诀|长风|长眠|长安|长空|长明|长寂|长川|长隐|长寻|长夜|长辞|长渡|长生|长烬|长思|长陵|长越|长清|长宁|长祈|长璟|长衍|长旭|长霄|'+
-'景辞|景深|景初|景曜|景墨|景澈|景湛|景淮|景琛|景修|景玄|景尘|景珩|景熙|景安|景宸|景霄|景川|景墨|景白|景枫|景煜|景言|景祈|景朔|景舟|景黎|'+
-'子墨|子渊|子谦|子恒|子轩|子瑜|子珩|子澈|子衍|子殊|子煜|子宸|子夜|子归|子陵|子修|子言|子期|子初|子尘|子安|子清|子睿|子晏|子霄|子寒|子辰|子砚|子衡|'+
-'清辞|清玄|清尘|清绝|清越|清寒|清漪|清朔|清衍|清临|清霄|清弦|清砚|清祈|清远|清衡|清源|清泽|清羽|清珩|清宴|清舟|清川|清宁|清霁|清晖|'+
-'云起|云归|云澜|云辞|云舟|云渡|云岫|云深|云隐|云烬|云霄|云鹤|云晏|云珩|云祈|云谏|云阙|云洄|云渊|云宸|云昭|云川|云朔|云奕|云舒|'+
-'墨尘|墨渊|墨寒|墨离|墨白|墨玄|墨卿|墨辞|墨舟|墨澜|墨珩|墨宸|墨修|墨川|墨羽|墨烬|墨霄|墨痕|墨言|墨湛|墨临|墨隐|墨衡|墨晏|墨初|'+
-'夜玄|夜阑|夜寒|夜宸|夜渊|夜离|夜烬|夜沉|夜澜|夜霄|夜凌|夜白|夜寻|夜归|夜辞|夜行|夜溟|夜枭|夜枫|夜隐|夜祈|夜朔|夜无|夜昙|'+
-'寒渊|寒夜|寒烬|寒珩|寒霄|寒离|寒辞|寒舟|寒澈|寒羽|寒星|寒彻|寒凌|寒墨|寒卿|寒玉|寒隐|寒晏|寒昭|寒朔|'+
-'临风|临川|临舟|临霄|临清|临江|临雪|临安|临夜|临玄|临珩|临辞|临墨|临渊|临寒|临晏|临云|临砚|临祈|临鹤|'+
-'惊鸿|惊羽|惊寒|惊尘|惊云|惊月|惊霄|惊夜|惊阙|惊弦|惊雪|惊雷|惊梦|惊秋|惊川|惊白|惊世|惊辰|惊墨|'+
-'怀璟|怀玉|怀川|怀安|怀瑾|怀舟|怀清|怀远|怀霜|怀墨|怀玄|怀风|怀月|怀钰|怀昭|怀澈|怀朔|怀宁|怀晏|'+
-'承渊|承泽|承煜|承珩|承璟|承玄|承霄|承舟|承安|承景|承墨|承言|承昀|承晏|承钧|承熙|承衍|承钰|'+
-'昭珩|昭玄|昭衍|昭辞|昭澈|昭渊|昭宁|昭临|昭白|昭彻|昭远|昭朔|昭和|昭晏|昭宸|昭墨|昭陵|'+
-'时渊|时晏|时安|时衍|时清|时霁|时珩|时越|时序|时墨|时言|时舟|时景|时初|时归|时雨|时寒|时白|'+
-'祈年|祈安|祈川|祈言|祈墨|祈渊|祈珩|祈舟|祈云|祈霄|祈夜|祈尘|祈白|祈澜|祈晏|祈宁|'+
-'言卿|言澈|言昭|言修|言舟|言清|言安|言墨|言辞|言珩|言川|言晏|言初|言霄|言玉|言淮|'+
-'知寒|知微|知秋|知雪|知白|知远|知行|知许|知晏|知归|知止|知闲|知命|知玄|知澈|知衡|'+
-'听风|听雪|听雨|听竹|听潮|听松|听鹤|听澜|听云|听弦|听寒|听舟|听夜|听泉|听岚|'+
-'疏寒|疏影|疏朗|疏月|疏白|疏尘|疏云|疏雪|疏风|疏砚|疏林|疏越|疏晏|'+
-'鹤鸣|鹤轩|鹤川|鹤清|鹤辞|鹤舟|鹤年|鹤眠|鹤隐|鹤云|鹤霄|鹤归|鹤羽|鹤望|'+
-'玉衡|玉宸|玉尘|玉卿|玉珩|玉渊|玉霄|玉澜|玉川|玉昭|玉清|玉寒|玉修|玉辞|玉楼|玉白|'+
-'星阑|星野|星沉|星落|星辞|星霄|星渊|星珩|星寒|星晏|星玄|星渡|星衍|星河|星隐|'+
-'沧澜|沧溟|沧渊|沧海|沧玄|沧羽|沧霄|沧夜|沧临|沧舟|'+
-'玄策|玄霄|玄烬|玄渊|玄夜|玄离|玄冥|玄清|玄羽|玄殊|玄澈|玄钧|玄晏|玄墨|玄昭|玄临|玄朔|'+
-'凌渊|凌夜|凌霄|凌寒|凌川|凌墨|凌宸|凌舟|凌玄|凌烬|凌澈|凌珩|凌云|凌尘|凌晏|凌祈|'+
-'君临|君墨|君玄|君离|君澜|君晏|君衍|君珩|君策|君尘|君夜|君霄|君渊|君寒|君白|君清|君辞|'+
-'天衍|天璇|天权|天衡|天枢|天曜|天霄|天玄|天澜|天绝|天策|天恒|天朔|天渊|天祈|'+
-'苍梧|苍玄|苍溟|苍夜|苍澜|苍霄|苍寒|苍尘|苍羽|苍渊|苍明|苍衍|'+
-'烬渊|烬寒|烬辞|烬夜|烬玄|烬霄|烬川|烬羽|烬白|烬离|'+
-'逐风|逐月|逐尘|逐云|逐影|逐光|逐霄|逐星|逐夜|逐寒|逐川|逐鹿|'+
-'辞镜|辞舟|辞渊|辞寒|辞安|辞尘|辞夜|辞墨|辞霄|辞白|辞远|'+
-'砚清|砚辞|砚寒|砚之|砚秋|砚卿|砚初|砚白|砚川|砚珩|砚修|砚归|'+
-'照夜|照寒|照川|照临|照雪|照影|照尘|照白|照玄|照月|'+
-'明渊|明珩|明彻|明昭|明霄|明熙|明晏|明修|明轩|明澈|明辞|'+
-'扶光|扶摇|扶风|扶苏|扶云|扶尘|扶霄|扶渊|扶清|'+
-'行止|行简|行远|行知|行歌|行月|行云|行霄|行川|行渊|行之|'+
-'修远|修竹|修言|修珩|修泽|修然|修明|修白|修辞|修衍|修玄|'+
-'逸之|逸舟|逸寒|逸澜|逸清|逸川|逸云|逸轩|逸珩|逸霄|'+
-'羡之|羡鱼|羡尘|羡云|羡安|羡舟|羡白|羡霄|羡川|'+
-'璟|玦|琰|璨|昀|宸|煜|昱|曜|翎|凛|彻|渊|辞|岚|衍|朔|晟|昶|湛|洵|禹|珣|琛|珏|玹|泠|骁|劭|璋|鸿|燊|玠|璞|琤|琨|瑾|琮|瑄|霄|霆|霁|赫|璟|灼|煊|瑜|琅|尧|舜|昊|晔|旻|晞|晖|斐|祯|祎|恪|弈|祐|勖|纾|隽|昶|峥|峤|嵘|翡|砚|樾|檀|昭|澜|溟|澈|翊|珩|玦'
-);
-const NM_F=SP(
-'清欢|惊鸿|婉宁|若雪|念卿|青鸾|映月|琉璃|霜华|南枝|初瑶|挽歌|绾绾|月见|知微|落英|昭昭|明烛|素心|扶摇|蘅|鸢|听雪|拂衣|锦书|芷若|浅浅|云裳|晚晴|如意|雪鸢|凝香|璃月|紫苏|轻罗|疏影|书瑶|清漪|沅|苒|筝|歆|玥|灵犀|忘忧|采薇|蒹葭|长宁|朝颜|暮雪|星遥|青黛|'+
-'清月|清霜|清璃|清歌|清颜|清音|清婉|清芷|清妩|清浅|清泠|清棠|清漪|清辞|清梦|清瑶|清绾|清鸢|清露|清荷|清宁|清韵|清妍|清嫣|清蘅|清欢|清凝|清微|清姝|清竹|'+
-'若璃|若曦|若兮|若卿|若微|若宁|若瑶|若汐|若棠|若霜|若绾|若笙|若蘅|若妤|若芷|若鸢|若音|若初|若梦|若嫣|若雪|若烟|若月|若澜|若溪|'+
-'云汐|云染|云萝|云烟|云歌|云裳|云舒|云绾|云姝|云蘅|云瑶|云霏|云棠|云浅|云妩|云眠|云梦|云鸢|云初|云微|云枝|云霜|云兮|云姒|云瓷|'+
-'月璃|月瑶|月汐|月染|月眠|月华|月影|月凝|月姝|月歌|月卿|月笙|月棠|月婵|月绾|月微|月晚|月霜|月盈|月萝|月吟|月芷|月鸢|月栖|月落|月阑|'+
-'雪璃|雪凝|雪姝|雪鸢|雪棠|雪卿|雪眠|雪妍|雪落|雪澜|雪瑶|雪汐|雪微|雪初|雪见|雪霁|雪月|雪音|雪绾|雪晴|雪舞|雪容|雪妩|'+
-'霜凝|霜璃|霜雪|霜月|霜华|霜鸢|霜棠|霜卿|霜微|霜绾|霜音|霜晚|霜染|霜露|霜泠|霜眠|霜影|霜辞|霜序|'+
-'洛璃|洛汐|洛宁|洛笙|洛棠|洛鸢|洛霜|洛姝|洛妍|洛瑶|洛歌|洛绾|洛微|洛初|洛颜|洛音|洛清|洛染|洛月|洛祈|'+
-'璃歌|璃月|璃染|璃雪|璃鸢|璃霜|璃棠|璃姝|璃心|璃烟|璃晚|璃梦|璃颜|璃卿|璃音|璃瑶|'+
-'绾青|绾月|绾音|绾宁|绾歌|绾棠|绾霜|绾璃|绾心|绾颜|绾瑶|绾汐|绾卿|绾梦|绾鸢|绾枝|绾秋|'+
-'青璃|青霜|青蘅|青鸢|青禾|青枝|青竹|青芷|青萝|青棠|青妩|青岚|青音|青雪|青歌|青月|青衣|青瓷|青绾|青辞|'+
-'紫鸢|紫璃|紫霜|紫月|紫绾|紫宁|紫姝|紫棠|紫烟|紫笙|紫瑶|紫凝|紫苑|紫绡|紫微|紫岚|紫妍|'+
-'晚棠|晚宁|晚霜|晚月|晚歌|晚璃|晚卿|晚鸢|晚笙|晚妆|晚秋|晚照|晚凝|晚妤|晚晴|晚云|晚音|晚禾|晚汐|'+
-'初雪|初霜|初月|初棠|初瑶|初绾|初璃|初宁|初妍|初见|初晴|初夏|初音|初岚|初鸢|初辞|初露|初烟|初然|初微|'+
-'念安|念初|念卿|念宁|念瑶|念璃|念霜|念雪|念汐|念鸢|念棠|念歌|念欢|念月|念姝|念昔|念微|念慈|'+
-'知晚|知意|知微|知月|知雪|知音|知棠|知鸢|知宁|知夏|知秋|知欢|知颜|知瑶|知梦|知蘅|知霜|'+
-'听月|听雨|听雪|听风|听澜|听竹|听歌|听霜|听鸢|听棠|听荷|听琴|听雁|听露|听泉|听音|听岚|'+
-'映雪|映霜|映月|映竹|映荷|映棠|映瑶|映璃|映晚|映秋|映兰|映汐|映鸢|映岚|映微|'+
-'锦瑟|锦棠|锦鸢|锦瑶|锦月|锦璃|锦宁|锦霜|锦颜|锦绾|锦音|锦妤|锦姝|锦微|锦岚|'+
-'花朝|花眠|花影|花月|花辞|花颜|花绾|花染|花枝|花语|花璃|花瑶|花晚|花音|花棠|花霜|'+
-'扶桑|扶月|扶霜|扶璃|扶歌|扶鸢|扶棠|扶枝|扶光|扶宁|扶微|扶雪|扶兰|'+
-'惊雪|惊鸿|惊月|惊棠|惊霜|惊梦|惊鸢|惊岚|惊华|惊晚|惊秋|惊蝶|'+
-'长歌|长乐|长宁|长欢|长安|长月|长雪|长霜|长璃|长鸢|长棠|长笙|长微|长音|长姝|长忆|长思|长相|'+
-'星璃|星鸢|星晚|星眠|星月|星棠|星霜|星瑶|星澜|星妤|星姝|星微|星绾|星晴|星遥|'+
-'朝露|朝颜|朝云|朝月|朝雪|朝歌|朝夕|朝华|朝棠|朝鸢|朝霜|朝微|朝宁|朝瑶|朝暮|'+
-'夕颜|夕月|夕瑶|夕璃|夕歌|夕霜|夕棠|夕鸢|夕宁|夕微|夕妍|夕雪|夕照|'+
-'疏影|疏月|疏雪|疏霜|疏桐|疏棠|疏璃|疏鸢|疏音|疏晚|疏云|疏荷|'+
-'蘅芜|蘅月|蘅霜|蘅雪|蘅若|蘅音|蘅歌|蘅棠|蘅微|蘅璃|蘅鸢|蘅宁|'+
-'芷兰|芷汐|芷璃|芷雪|芷宁|芷鸢|芷月|芷瑶|芷棠|芷晴|芷若|芷微|芷柔|芷音|芷蘅|'+
-'棠梨|棠月|棠雪|棠宁|棠鸢|棠霜|棠璃|棠音|棠微|棠姝|棠颜|棠汐|'+
-'梨月|梨雪|梨霜|梨棠|梨鸢|梨音|梨微|梨妆|梨白|梨落|梨烟|梨清|'+
-'南枝|南絮|南乔|南歌|南鸢|南雪|南璃|南棠|南笙|南烟|南汐|南音|南栀|南微|南月|'+
-'北月|北笙|北棠|北霜|北鸢|北璃|北音|北微|北雪|北枝|'+
-'灵汐|灵鸢|灵霜|灵瑶|灵璃|灵月|灵绾|灵棠|灵姝|灵音|灵犀|灵歌|灵微|灵羽|灵蘅|'+
-'梦璃|梦瑶|梦霜|梦鸢|梦棠|梦歌|梦绾|梦月|梦宁|梦微|梦蝶|梦岚|梦姝|梦华|梦羽|'+
-'素雪|素霜|素月|素璃|素鸢|素宁|素妍|素棠|素衣|素琴|素音|素微|素蘅|素婉|'+
-'嫣然|嫣宁|嫣璃|嫣月|嫣雪|嫣棠|嫣鸢|嫣霜|嫣妤|嫣歌|嫣微|'+
-'婉清|婉棠|婉璃|婉霜|婉鸢|婉宁|婉瑶|婉音|婉月|婉柔|婉仪|婉晴|婉初|婉卿|'+
-'姝月|姝璃|姝宁|姝鸢|姝棠|姝雪|姝音|姝霜|姝微|姝妤|姝颜|姝瑶|'+
-'卿月|卿璃|卿宁|卿鸢|卿棠|卿雪|卿霜|卿音|卿微|卿颜|卿瑶|卿辞|'+
-'吟霜|吟月|吟雪|吟风|吟鸢|吟棠|吟歌|吟璃|吟微|吟秋|'+
-'烟萝|烟雨|烟岚|烟月|烟霜|烟璃|烟鸢|烟棠|烟微|烟笼|烟华|烟绯|'+
-'绯月|绯璃|绯霜|绯烟|绯棠|绯鸢|绯颜|绯歌|绯雪|绯音|'+
-'鸢尾|鸢月|鸢雪|鸢璃|鸢棠|鸢霜|鸢歌|鸢宁|鸢微|鸢颜|'+
-'鹿溪|鹿鸣|鹿眠|鹿月|鹿雪|鹿棠|鹿鸢|鹿璃|鹿霜|鹿微|'+
-'桃夭|桃枝|桃月|桃雪|桃笙|桃鸢|桃璃|桃棠|桃歌|桃音|'+
-'栀晚|栀月|栀雪|栀鸢|栀棠|栀璃|栀宁|栀微|栀音|栀颜|'+
-'昭宁|昭华|昭月|昭雪|昭鸢|昭璃|昭棠|昭妍|昭音|昭微|昭仪|昭容|昭阳|昭辞|'+
-'明月|明珠|明玥|明璃|明鸢|明霜|明棠|明音|明妤|明绾|明微|明姝|'+
-'玉璃|玉霜|玉鸢|玉宁|玉棠|玉瑶|玉音|玉微|玉姝|玉颜|玉绾|玉卿|玉珑|玉笙|'+
-'瑾月|瑾璃|瑾鸢|瑾宁|瑾棠|瑾霜|瑾音|瑾妤|瑾姝|瑾微|'+
-'汐月|汐瑶|汐璃|汐宁|汐鸢|汐棠|汐霜|汐颜|汐音|汐微|'+
-'澜月|澜璃|澜鸢|澜霜|澜棠|澜歌|澜音|澜微|澜雪|澜宁|'+
-'夙月|夙雪|夙鸢|夙璃|夙霜|夙棠|夙宁|夙音|夙微|夙歌|'+
-'绮月|绮雪|绮霜|绮鸢|绮棠|绮璃|绮梦|绮音|绮微|绮罗|'+
-'琴心|琴月|琴雪|琴霜|琴鸢|琴璃|琴棠|琴音|琴歌|琴微|'+
-'诗音|诗月|诗瑶|诗璃|诗霜|诗鸢|诗棠|诗微|诗宁|诗雪|'+
-'琼华|琼枝|琼月|琼雪|琼瑶|琼璃|琼鸢|琼棠|琼音|琼霜|'+
-'妙音|妙璃|妙月|妙雪|妙鸢|妙棠|妙宁|妙霜|妙微|妙仪|'+
-'凝月|凝霜|凝雪|凝璃|凝鸢|凝棠|凝香|凝华|凝音|凝微|凝烟|凝露|'+
-'惜月|惜霜|惜雪|惜鸢|惜璃|惜棠|惜音|惜微|惜颜|惜晚|'+
-'怜月|怜雪|怜霜|怜鸢|怜璃|怜棠|怜音|怜微|怜卿|怜梦|'+
-'忆雪|忆月|忆霜|忆鸢|忆璃|忆棠|忆宁|忆微|忆歌|忆昔|'+
-'落月|落雪|落霜|落鸢|落璃|落棠|落音|落微|落华|落樱|'+
-'璇|玥|璃|鸢|蘅|苒|沅|泠|汐|澜|姝|妤|婳|姮|嫣|婵|娆|绾|霏|霓|霁|曦|绮|绯|缨|缈|鸾|凰|翎|翡|绫|纨|纾|绡|绣|纭|霜|雪|月|星|棠|栀|蘩|芙|芷|蘅|蕴|萦|蕊|蕙|茵|茗|苓|芸|芮|芊|莞|莳|菀|萱|葭|蓁|蔓|菱|荷|莲|兰|竹|梅|樱|桃|梨|笙|筝|弦|音|歌|韵|诗|画|墨|染|颜|晚|宁|安|欢|乐|念|思|微|初|瑶|珑|珞|琬|瑗|瑷|琳|琰|琪|珺|琇|璎|璐|瑾|璇|瑜|琼|璧|琦|琬|媞|娴|妍|晗|晞|昕|昀|晏|昭|晴|曈|熙|煦|灼|烛|莹|盈|瑛|灵|清|素|娥|姣|姿|妙|嫦|娉|婷|曼|悠|恬|宛|娅|祎|祯|禧|鸥|鹭|鹊|鹤|雀'
-);
+const SUR=SP('沈|谢|顾|萧|楚|江|陆|林|温|叶|云|墨|白|苏|洛|秦|燕|裴|晏|宋|凌|祁|萧|容|姜|孟|贺|纪|许|程|傅|陈|季|韩|唐|薛|钟|阮|穆|沐|易|闻|岑|商|殷|卫|楼|花|月|风|慕容|司徒|上官|南宫|独孤|东方|夏侯|闻人|长孙|公孙|令狐|欧阳|宇文|端木|百里|轩辕|钟离|拓跋|澹台|司马');
+const NM_M=SP('无忧|惊澜|夜白|长歌|子期|怀瑾|临渊|砚舟|星河|聿|寒川|清晏|听澜|既白|承影|知意|九霄|不言|少卿|行舟|玄|烬|昭明|鹤归|墨染|景行|逸尘|凌霜|沉舟|归远|疏桐|千秋|御风|景渊|子衿|长卿|奕|珩|翊|澈|霁|清和|望舒|无涯|问天|寒舟|朝歌|惊蛰|晏之|怀远|止戈|浩然|云深');
+const NM_F=SP('清欢|惊鸿|婉宁|若雪|念卿|青鸾|映月|琉璃|霜华|南枝|初瑶|挽歌|绾绾|月见|知微|落英|昭昭|明烛|素心|扶摇|蘅|鸢|听雪|拂衣|锦书|芷若|浅浅|云裳|晚晴|如意|雪鸢|凝香|璃月|紫苏|轻罗|疏影|书瑶|清漪|沅|苒|筝|歆|玥|灵犀|忘忧|采薇|蒹葭|长宁|朝颜|暮雪|星遥|青黛');
 
 const HINTS=SP(`{d}送来一碗亲手熬的灵粥，碗底压着一片红叶。|你发现{d}的剑穗，换成了和你同色的流苏。|深夜路过演武场，{d}正在练剑，剑招里分明全是你的影子。|{d}最近总找借口来请教心法，一坐就是一下午，眼睛却不在书上。|你听弟子们议论，{d}在山下替你和人打了一架，说对方“出言不逊”。|你的案头每天清晨都会多一枝带露的花，没有署名。|{d}把你随手丢掉的草稿纸一张张捡起来，抚平收好。|你咳嗽了一声，半个时辰后{d}端来了一碗川贝雪梨。|{d}在你窗下的石阶上坐着打盹，手里还攥着一卷你的手札。|宗门里传言，{d}拒绝了第七个向{ta}示好的人。`);
 const HARASS={
@@ -569,16 +449,16 @@ const CAREER_PREF={NT:[4,9,2,8,12],NF:[18,13,16,0,10],SJ:[1,17,6,7,3],SP:[15,14,
 
 const ACTS={
   clean:{n:'打扫洞府',days:1,desc:'新官上任，先把洞府收拾干净。'},
-  idle:{n:'虚度一日',days:1,desc:'什么也不做，看看云，发发呆。用来调整日子。'},
   cult:{n:'打坐修炼',days:5,desc:'吐纳灵气，增长修为，略微平复动心。'},
   teach:{n:'开坛授课',days:2,desc:'为徒弟讲道：徒弟修为提升；每月首次授课 KPI +1/人。'},
+  market:{n:'逛藏宝阁',days:1,desc:'去宗门藏宝阁买卖丹药法器，货品每月一换。'},
   alch:{n:'开炉炼丹',days:0,desc:'消耗灵玉炼制丹药，不同丹药耗时不同（5～300日）。'},
   task:{n:'宗门差事',days:0,desc:'每月 3～5 个差事：打架、捐献、上缴物品、驻守远行……耗时 1～100 日。'},
-  heal:{n:'静养',days:0,desc:'有伤在身，无法修炼。安心静养，气血恢复得快些。'},
+  heal:{n:'静养疗伤',days:0,desc:'有伤在身，无法修炼。安心静养，气血恢复得快些。'},
   explore:{n:'下山游历',days:0,desc:'游山玩水或历练探险，3～300 日，可带徒弟同行。'},
-  market:{n:'逛坊市',days:1,desc:'去宗门坊市买卖丹药法器，货品每月一换。'},
+  idle:{n:'虚度一日',days:1,desc:'什么也不做，看看云，发发呆。用来调整日子。'},
   renovate:{n:'修葺洞天',days:0,desc:'花大量灵玉翻修洞府，提升修炼效率（黄→玄→地→天）。耗时耗体力。'},
-  seclude:{n:'闭关',days:0,desc:'闭关 30～300 日：修为大涨、道心澄明。期间无暇管教徒弟，宗门大事也会错过。'}
+  seclude:{n:'闭关修行',days:0,desc:'闭关 30～300 日：修为大涨、道心澄明。期间无暇管教徒弟，宗门大事也会错过。'}
 };
 
 // 徒弟主动邀约
@@ -1769,6 +1649,27 @@ ESFP:SP(`哇！礼物！{s}最好啦！|弟子要开派对庆祝！|谢谢{s}！
 const PB_HAND=SP(`亲手编了一个平安结|折了九十九只纸鹤|抄了一卷《长生经》为你祈福|做了一碗长寿面|画了一幅你的画像|雕了一只小木剑|绣了一个香囊|种了一盆兰花|写了一首祝寿诗|捏了一个你模样的泥人|做了一盒桂花糕|在许愿树上为你挂了一条红绸`);
 </script>
 <script>
+// ===== 恢复前世记忆后的闲聊（每种性格 30 条） =====
+const MEM_T={
+INTJ:SP(`好久不见，{s}。这一次，弟子算好了每一步。|上一世弟子算错了一件事。这一世不会了。|{s}的眉间多了一道纹。是弟子走后添的吗？|弟子记得{s}最后看我的眼神。我不想再看到第二次。|前世的剑招，弟子都还记得。身体跟不上而已。|轮回一趟，弟子更清楚自己要什么了。|{s}还是老样子。这让弟子很安心。|弟子死的时候，最后想的是{s}的茶有没有凉。|这一次，弟子要活得比{s}更久。|弟子记得{s}在坟前说过的话。每一个字。|前世欠{s}的，弟子会一样一样还上。|奈何桥上，弟子没喝那碗汤。|弟子想过很多次，如果能重来。现在真的重来了。|{s}不必愧疚。那是弟子自己的选择。|弟子记得洞府里每一块砖的位置。|{s}又收了新弟子。他们比我当年乖吗？|这具身体太弱了。弟子会尽快练回来。|前世弟子不善言辞，这一世想多说几句。|{s}种的那棵桃树，长高了。|弟子回来，就没打算再走。|轮回很冷。{s}这里很暖。|弟子记得{s}教的第一个字。|上一世没说出口的话，这一世弟子会找机会说。|{s}看弟子的眼神，好像在看一个故人。我就是那个故人。|弟子算过了，这一世的命格，比上一世好。|{s}的头发白了一缕。|弟子不会再让{s}站在坟前了。|前尘往事，弟子都记着。不必提，也不会忘。|弟子回来了。仅此而已。|这一世，弟子想换一种方式陪着{s}。`),
+INTP:SP(`{s}！弟子想起来了！全都想起来了！|原来轮回是真的。弟子要好好研究一下。|好久不见，{s}。你还记得我上辈子炸掉的那个丹炉吗？|弟子上辈子没解开的那道阵法题，这辈子解开了！|奈何桥原来那么长，弟子一边走一边在想阵法。|{s}，你说记忆是存在魂魄里还是存在灵根里？|弟子的书房还在吗？那些书……|上辈子弟子死得太突然了，很多问题还没问您。|{s}的茶还是那个味道。|弟子回来了，带着上辈子没想完的问题。|好奇怪，这具身体的手比上辈子小。|{s}，弟子上辈子是不是总忘了吃饭？这辈子也是。|轮回的感觉……很难形容。像睡了很长很长的一觉。|弟子记得{s}那天哭了。弟子从没见{s}哭过。|这辈子弟子要先把命保住，再研究别的。|{s}的洞府变了好多，弟子要重新画一张地图。|弟子想起前世的一个理论，现在看来是错的！|好久不见。弟子……其实很想您。|上辈子弟子不会说想念，这辈子学会了。|{s}，弟子回来了，你开心吗？|弟子还记得上辈子{s}夸过我一次。就一次。|轮回之前，弟子求了阎王，说还有题没解完。|这辈子的灵根和上辈子一样。很巧。|弟子要把上辈子没写完的书写完。|{s}一点都没变。弟子却变小了。|弟子想起来了，上辈子最后一句话想说的是“谢谢”。|{s}，再教弟子一遍那个阵法吧，弟子想再听一次。|轮回一圈，弟子发现最有意思的还是{s}。|上辈子的事，弟子都记在心里了。|好久不见，{s}。这次弟子会小心点的。`),
+ENTJ:SP(`{s}，弟子回来了。上一世没完成的事，这一世接着做。|好久不见。这次弟子不会再输。|前世弟子死得窝囊。这一世，谁也别想再让弟子倒下。|{s}的峰，弟子会守住的。上辈子没守住的，这辈子补上。|弟子记得是谁害了我。账，慢慢算。|轮回一趟，弟子的野心一点没少。|{s}，这一世弟子还要当峰主。|前世的仇人还活着吗？弟子想去看看。|弟子回来了，咱们峰也该重振了。|{s}，上辈子弟子没来得及报答您。|这具身体太弱，弟子三年内练回来。|好久不见，{s}。这一次，弟子要站得更高。|弟子记得{s}为弟子收尸的样子。不会有下一次了。|前世的功法，弟子都还记得，只差修为。|{s}老了一些。弟子回来得不算太晚。|轮回之中，弟子想得最多的是{s}。|这一世，弟子不会再意气用事。|前尘往事，弟子不后悔。只后悔走得太早。|{s}，有什么事交给弟子。像从前一样。|弟子回来，第一件事就是给{s}磕个头。|好久不见。这一世，弟子还是{s}的徒弟。|上辈子没赢的那场比试，这辈子弟子会赢回来。|弟子记得前世每一个看不起我的人。|{s}的规矩还是老样子，弟子都记着。|轮回不过是换了个开始。|这一世，弟子要{s}再也不用为弟子担心。|弟子回来了。告诉那些人，我回来了。|前世的剑，还在吗？|{s}，弟子这次会活得很久。|好久不见。还有很多事要做。`),
+ENTP:SP(`{s}！猜猜我是谁？——好久不见！|弟子去阎王殿转了一圈，还跟判官打了个赌，赢了，就回来了！|上辈子弟子还欠执事一顿揍，这辈子补上！|{s}，你哭过吧？弟子听说了！|轮回好无聊，还是这里好玩。|好久不见，{s}的表情还是那么好捉弄！|弟子回来了，宗门又要热闹了！|上辈子弟子的秘密通道还在吗？|奈何桥上那碗汤太难喝了，弟子偷偷倒掉了。|{s}，弟子是不是死得特别戏剧性？|这辈子弟子要多活几年，上辈子没玩够。|好久不见！{s}想我了吧？承认吧！|弟子记得{s}最怕弟子闯祸。这辈子……也会闯。|轮回一圈，弟子的点子更多了！|{s}的洞府怎么这么安静？弟子回来就热闹了！|上辈子那个赌，弟子还没赢呢！|弟子跟孟婆讨价还价，少喝了半碗，所以都记得。|{s}，再骂弟子一次嘛，好久没听了。|好久不见！弟子带了阴间的八卦！|这辈子弟子要先把执事的胡子再烧一次。|{s}一点都没变，还是那么好看。|上辈子弟子没说出口的话……算了，先玩！|轮回的时候，弟子一直在想{s}会不会想我。|弟子回来了！{s}的清静日子结束了！|好久不见。……其实弟子挺想你的。真的。|上辈子的徒弟们还在吗？弟子要去吓唬他们！|弟子记得{s}说过“你再闯祸就不要你了”。骗人。|这辈子弟子要做{s}最难忘的徒弟！|{s}，弟子回来了，你开心得要哭了吧？|好久不见！这次弟子不会那么早走了！`),
+INFJ:SP(`好久不见，{s}。弟子回来了。|轮回之中，弟子一直听得见{s}在叫我。|{s}，那天你在坟前说的话，弟子都听见了。|弟子记得最后一眼，是{s}的脸。|这一世，弟子想陪{s}久一点。|{s}这些年，是不是很孤单？|弟子回来的路很长，但一想到{s}就不怕了。|前世没来得及说的话，弟子这一世慢慢说。|{s}瘦了。弟子不在的时候，没人照顾您吧。|奈何桥上，弟子回头看了很多次。|{s}，你不用愧疚，弟子从来没怪过你。|这一世，弟子要先学会保护自己，才能保护{s}。|弟子记得洞府的桃花，每一年开的样子。|好久不见。{s}的眼睛，还是那么温柔。|前世的事，弟子都记得。好的坏的，都记得。|{s}每年清明都来看弟子，对吗？|弟子回来，是因为放心不下{s}。|轮回很冷，可是有{s}的念想，就不冷了。|这一世，弟子不想再有遗憾。|{s}，能再听你叫一次我的名字吗？|弟子记得{s}的每一句叮嘱。|前尘往事如梦，可{s}是真的。|好久不见，弟子很想您。|这一世的弟子，会比上一世更勇敢。|{s}种的那盆兰花，还开吗？|弟子回来了，带着上一世没用完的温柔。|{s}，别哭。弟子回来了。|弟子记得那天下着雨。|这一世，弟子会好好的。|好久不见。这一次，弟子不走了。`),
+INFP:SP(`{s}……弟子回来了……（眼泪止不住）|好久不见……弟子好想您……|弟子在轮回里哭了好久，因为见不到{s}。|{s}，你还记得弟子吗？弟子一直记得你。|弟子上一世写给您的诗，还在吗？|奈何桥好冷好长，弟子一直在念{s}的名字。|这一世，弟子想一直一直待在{s}身边。|{s}每年都来看弟子，弟子知道的。|弟子记得那片萤火虫，还记得{s}笑了。|前世走得太早了，好多话都没说。|好久不见……{s}还是那么好。|这一世，弟子要把上一世的份一起爱回来。|弟子梦见过很多次，回到洞府的样子。|{s}，你瘦了，是因为想弟子吗？|弟子还记得{s}掌心的温度。|轮回的时候，弟子把{s}的样子刻在了魂魄里。|好久不见，弟子给您画了一幅画。|这一世，弟子不会再让{s}难过了。|{s}……能抱一下吗？就一下。|弟子记得{s}说过“别怕”。弟子一直记着。|前世的事像一场梦，醒来还是{s}。|好久不见。花又开了，弟子也回来了。|弟子回来，是为了再看{s}一眼。|这一世的弟子，会更勇敢地说出心里话。|{s}，你还会摸摸弟子的头吗？|弟子记得后山那只小兔子。|轮回很孤单，现在不孤单了。|好久不见。弟子再也不想离开了。|{s}的声音，弟子在轮回里听了很多遍。|弟子回来了，回到{s}身边了。`),
+ENFJ:SP(`好久不见，{s}！弟子回来了！|大家都还好吗？弟子好想大家！|{s}，这些年辛苦你了。弟子回来帮你。|弟子记得咱们峰的每一个人。|轮回一趟，弟子更知道要珍惜什么了。|{s}，弟子不在的时候，是谁给你泡茶？|好久不见，{s}的笑容少了。弟子要把它找回来。|前世的弟子太拼了，这一世要先照顾好自己。|弟子回来了，咱们峰又热闹了！|{s}，你还记得弟子组织的那次聚会吗？|这一世，弟子还要做大家的依靠。|好久不见。{s}，弟子想抱抱你。|弟子记得{s}在坟前说过的话，谢谢你。|奈何桥上，弟子惦记着{s}有没有好好吃饭。|轮回很长，可弟子一直记得回家的路。|{s}，弟子回来了，你不用一个人扛了。|这一世，弟子要让{s}多笑笑。|前世没来得及告别，这一世不用告别了。|好久不见！新来的师弟师妹们好可爱！|弟子记得{s}最爱喝的茶。|{s}，这一世弟子还给你过生辰。|轮回一圈，弟子还是最喜欢这里。|好久不见。弟子回来了，一切都会好的。|弟子记得{s}说过“你是咱们峰的太阳”。|这一世，弟子要更好地守护大家。|{s}，弟子不在的这些年，你是不是很累？|前尘往事，弟子都记得，都是温暖的。|好久不见。{s}，欢迎弟子回家吧。|弟子回来了，以后的日子交给弟子。|这一世，弟子要陪{s}很久很久。`),
+ENFP:SP(`{s}{s}！弟子回来啦！！|好久不见！弟子想死你了！|弟子在阴间到处乱跑，判官都认识我了！|{s}，你哭了吗？哈哈弟子都知道！|弟子回来了！世界又变好玩了！|上辈子没看完的风景，这辈子要看完！|好久不见！{s}一点都没变！|弟子跟孟婆说，我还有师尊要见，她就放我走了！|这辈子弟子要更开心地活！|{s}，弟子上辈子的秘密花园还在吗？|轮回一圈，弟子更喜欢{s}了！|好久不见！弟子给您编个花环！|弟子记得{s}笑起来的样子，好看！|上辈子走得太快了，好多好玩的还没玩！|{s}，这辈子我们一起去看海吧！|弟子回来了！灵兽园的小狐狸还记得我吗？|好久不见！弟子要给{s}讲阴间的故事！|这一世弟子要每天都陪着{s}！|{s}，你想我吗？想吧想吧！|弟子记得洞府的每一个角落！|轮回好无聊，还是{s}身边最好！|好久不见！弟子的歌还记得吗？唱给您听！|这辈子弟子要把上辈子的快乐翻倍！|{s}，弟子回来了，你开心吗？|弟子记得{s}说过“你这孩子”。好怀念！|上辈子没说的喜欢……这辈子慢慢说！|好久不见！弟子长高了！……好像变矮了。|弟子回来了，再也不走啦！|{s}，我们去放风筝吧，像以前一样！|好久不见！弟子带着全部的记忆回来了！`),
+ISTJ:SP(`弟子回来了，{s}。前世的功课，弟子都还记得。|好久不见。弟子会继续守着洞府。|前世的账目，弟子记得清清楚楚。|{s}，弟子不在的时候，规矩还守着吗？|轮回一趟，弟子还是弟子。|弟子记得{s}的作息，一时一刻都不差。|这一世，弟子会更稳妥地修行。|好久不见。{s}的茶，弟子来泡。|前世弟子死得不够周全。这一世会更小心。|弟子记得门规的每一条。|{s}，弟子回来复命了。|这具身体还不习惯，弟子会尽快适应。|弟子记得前世的灵田种在哪里。|好久不见。弟子不善言辞，只会做事。|前世没做完的事，弟子会一件件做完。|{s}瘦了，弟子会照顾好您的起居。|轮回之中，弟子一直记着要回来。|弟子记得{s}的嘱托。|这一世，弟子依旧谨守本分。|好久不见。{s}的洞府还是这么整洁吗？|前世的剑法，弟子一招一式都记得。|弟子回来了，一切照旧。|{s}，弟子不会再让您担心了。|轮回不过是换了一具身体。|弟子记得{s}说过“稳重”二字。|好久不见。弟子会更努力。|这一世，弟子还是{s}最可靠的徒弟。|前尘往事，弟子都记下了。|弟子回来了。请{s}吩咐。|好久不见，{s}。弟子很高兴。`),
+ISFJ:SP(`{s}……弟子回来了。您……还好吗？|好久不见，弟子给您熬了汤，还是以前的方子。|弟子不在的时候，谁给您缝衣服？|{s}瘦了好多……弟子心疼。|轮回之中，弟子一直惦记着{s}有没有添衣。|好久不见。弟子还记得您不喜欢太甜。|这一世，弟子还要照顾{s}。|前世没来得及给您做的那件外袍，弟子这次做完。|{s}，弟子回来了，以后不会再让您一个人了。|弟子记得{s}的每一个习惯。|好久不见。您的旧伤还疼吗？|奈何桥上，弟子一直在想{s}有没有好好吃饭。|这一世，弟子想一直守在{s}身边。|弟子记得洞府的花要怎么浇。|{s}，弟子回来，就是为了再照顾您。|好久不见。弟子……好想您。|前世的事，弟子都记得，记得您对弟子的好。|这一世，弟子要更早地说出心里话。|{s}，您哭过吗？弟子听说您每年都来看我。|弟子记得{s}掌心的温度。|轮回很冷，可想到{s}就暖了。|好久不见。弟子给您换了新被子。|这一世，弟子会好好爱惜自己，才能照顾{s}。|{s}的茶凉了，弟子去换。像从前一样。|弟子回来了，一切都会好起来的。|前尘往事，弟子一件都没忘。|好久不见。弟子还是那个笨笨的徒弟。|这一世，弟子还想做{s}的家人。|{s}，弟子回来了，您可以歇一歇了。|好久不见。这一次，弟子会守您很久很久。`),
+ESTJ:SP(`弟子回来了，{s}。前世的事务，弟子接着管。|好久不见。咱们峰的规矩，没乱吧？|前世弟子死得不明不白。这一世要查清楚。|{s}，弟子回来复职。|轮回一趟，弟子更知道效率的重要。|好久不见。这一世弟子还要竞选执事。|弟子记得前世的每一笔账。|{s}，这些年峰里谁在管事？弟子要看看。|这一世，弟子会更严格要求自己。|前世没完成的计划，弟子接着做。|好久不见。{s}的作息又乱了吧？|弟子回来了，一切照规矩来。|轮回之中，弟子一直在想咱们峰。|{s}，弟子不会再让您操心。|这具身体太弱，弟子会抓紧练回来。|好久不见。前世的仇，弟子记着。|弟子记得{s}最讨厌拖沓。|这一世，弟子要让咱们峰更强。|前尘往事，弟子不后悔，只是走得太早。|{s}，有什么事交给弟子。|好久不见。弟子回来，峰里就有主心骨了。|弟子记得前世的同门。|这一世，弟子做事会更周全。|{s}，弟子回来了，您可以放心了。|轮回不过是重新开始。|好久不见。弟子说到做到。|弟子记得{s}的每一个吩咐。|这一世，弟子还是{s}最得力的徒弟。|前世的教训，弟子记住了。|好久不见，{s}。我们继续。`),
+ESFJ:SP(`{s}！弟子回来了！好久不见！|大家都还好吗？弟子给大家带了点心！……阴间带不来，弟子现做！|{s}，弟子不在的时候，谁给你过生辰？|好久不见！洞府怎么这么冷清？弟子回来就热闹了！|弟子记得每个人的口味！|轮回一圈，弟子最想的还是咱们一家人。|{s}瘦了！弟子要给你做好吃的！|这一世，弟子还要照顾大家！|好久不见！弟子想抱抱{s}！|前世没办完的春日宴，这一世补上！|弟子记得{s}最爱的点心！|{s}，你每年都来看弟子，对吧？弟子都知道！|这一世，弟子要让洞府更温暖！|好久不见！新来的师弟师妹叫什么名字？|弟子回来了，以后不会让{s}孤单了！|奈何桥上，弟子惦记着大家有没有吵架。|{s}，弟子回来了，开心吗？|好久不见！弟子要给大家织围巾！|这一世，弟子还要做大家的开心果！|弟子记得洞府的每一张笑脸。|{s}，你笑一个嘛，弟子回来了！|轮回很冷清，还是家里热闹！|好久不见！弟子要办一场团圆宴！|这一世，弟子要陪{s}过每一个节日！|弟子记得{s}说过“有你在真好”。|好久不见。弟子……其实好想你。|这一世，弟子要把上一世的份一起补上！|{s}，弟子回家了！|好久不见！以后的日子交给弟子！|弟子回来了，一家人又齐了！`),
+ISTP:SP(`……回来了。|好久不见，{s}。|前世的剑，还在吗？|弟子记得。全部。|轮回而已。没什么。|{s}的剑鞘，又松了吧。|这具身体，不太顺手。|好久不见。还是老样子。|前世那一架，弟子还没打完。|弟子回来了。就这样。|{s}瘦了。|奈何桥，挺长的。|弟子记得后山的瀑布。|……想你了。说完了。|这一世，弟子会小心点。|前世的机关，弟子还会做。|{s}别看了，是我。|好久不见。茶还热吗？|轮回的时候，没什么好想的。除了{s}。|弟子回来了，以后不走了。|前世的伤，这一世没有了。挺好。|{s}，比一场？|弟子记得{s}的剑招。|好久不见。嗯。|这具身体太弱。练回来就是了。|前尘往事，不提了。|{s}还记得我。挺好。|弟子回来了。|好久不见。……挺好的。|{s}，我回来了。`),
+ISFP:SP(`{s}……好久不见。|弟子回来了，带着上一世的颜色。|轮回里很灰，只有想到{s}的时候有颜色。|弟子记得后山的野花海。|{s}，弟子给您画了一幅画，画的是前世的洞府。|好久不见。{s}的衣服颜色还是那么好看。|这一世，弟子想安安静静陪着{s}。|前世走得太早，好多画没画完。|弟子记得{s}笑起来的样子。|{s}每年都来看弟子吗？弟子好像感觉得到。|好久不见。弟子给您带了一朵花。|这一世，弟子想把上一世没说的话，画给{s}看。|奈何桥边的花，没有{s}院子里的好看。|弟子回来了，回到{s}身边了。|{s}，你还记得弟子弹的那首曲子吗？|好久不见。月光还是那么温柔。|这一世，弟子要好好地活。|前尘往事，像一幅褪色的画。|弟子记得{s}掌心的温度。|{s}，能陪弟子去看一次雪吗？像以前一样。|好久不见。弟子回来了。|轮回之中，弟子一直在想{s}。|这一世，弟子不想再错过。|{s}瘦了，弟子心疼。|弟子记得洞府窗台上的那盆兰花。|好久不见。弟子做了一个风铃，挂在您门口。|这一世，弟子还是喜欢安静地待在{s}身边。|{s}，弟子回来了。|好久不见。花开了，弟子也回来了。|弟子回来了，这一次会待很久很久。`),
+ESTP:SP(`哈！{s}，老子……弟子回来了！|好久不见！阎王都打不过弟子！|弟子在阴间打了一架，打赢了就回来了！|{s}，你哭了吧？哈哈！|上辈子那个仇人还活着吗？弟子去找他算账！|好久不见！弟子的剑还在吗？|这辈子弟子要打得更狠！|轮回好无聊，没人跟弟子打架！|{s}，比一场！庆祝弟子回来！|弟子记得上辈子喝过的每一坛酒！|好久不见！弟子更能打了！|上辈子死得太憋屈，这辈子要活得痛快！|{s}一点都没变！还是那么帅！|弟子回来了！宗门谁不服，站出来！|奈何桥上，弟子跟鬼差打了一架。|好久不见！弟子带了阴间的酒！……开玩笑的。|这辈子弟子要先把命保住，再打架！|{s}，想弟子没？|弟子记得后山那头妖熊，这辈子要把它打服！|好久不见！弟子回来了，你就不无聊了！|上辈子没跟{s}说的话……算了，先喝酒！|轮回一圈，弟子的拳头更硬了！|{s}，弟子回来了，你开心吧！|好久不见！弟子要骑灵马跑一圈！|这辈子弟子要活得更久，打得更爽！|弟子记得{s}骂弟子的样子，好怀念！|好久不见。……其实，弟子挺想你的。|这辈子弟子要罩着{s}！|弟子回来了！谁也别想再让弟子倒下！|好久不见！痛快！`),
+ESFP:SP(`{s}！弟子回来啦！好久不见！|弟子在阴间给鬼差们表演了一段，他们就放弟子回来了！|好久不见！{s}想不想我？|弟子回来了！洞府又要热闹起来了！|上辈子没唱完的戏，这辈子接着唱！|{s}，弟子给你跳支舞，庆祝回来！|好久不见！弟子一点都没变！……好像变小了。|奈何桥上，弟子跟孟婆讲了一路笑话。|这辈子弟子要更开心地活！|{s}，你笑一个嘛，弟子回来了！|弟子记得上辈子的每一场烟火！|好久不见！弟子要开派对！|这一世，弟子要天天逗{s}笑！|{s}，你哭过吧？不许哭啦，弟子回来了！|弟子回来了！大家快来看！|好久不见！弟子新学了一个戏法——起死回生！|上辈子没穿过的漂亮衣服，这辈子都要穿！|{s}，我们去看灯会吧，像以前一样！|轮回好闷，还是这里好玩！|好久不见！弟子给您变个花！|这一世，弟子要把上辈子的快乐都补回来！|弟子记得{s}说过“你这个小戏精”。|好久不见！弟子要给大家唱歌！|{s}，弟子回来了，你开不开心？|这辈子弟子要活得更久，玩得更多！|好久不见。……其实，弟子好想你。|弟子回来了！每天都是节日！|{s}，我们放烟花吧！|好久不见！弟子再也不走啦！|弟子回来了，带着满满的开心回来了！`)
+};
+</script>
+<script>
 // ================= 书信组件（开头 × 职业近况 × 心意 × 结尾 × 性格附言） =================
 const LETTER={
  open:{
@@ -1887,7 +1788,7 @@ function faqiFx(keys){const o={};keys.forEach(k=>{const F=FAQI[k.split(':')[1]];
 function pFx(){const o=faqiFx(G.p.eq);o.calm=Math.min(.8,o.calm||0);return o}
 function dFaqi(d){return d.bag.filter(x=>x.k[0]==='f').map(x=>x.k).sort((a,b)=>itemInfo(b).g-itemInfo(a).g).slice(0,2)}
 function rollGrade(r,luck=0){const w=r>=40?[10,35,40,15]:r>=30?[30,40,25,5]:r>=20?[55,32,11,2]:[70,25,5,0];return wpick([0,1,2,3],g=>w[g]*(g>0?1+luck*2:1))}
-function randPill(g){const k=wpick(['jq','pj','jx','hy','wq','mj','qb','zy','zl','yl','ct','hx','hc'],k=>({jq:30,pj:12,jx:22,hy:16,wq:6,mj:14,qb:10,zy:4,zl:3,yl:6,ct:3,hx:3,hc:5})[k]);return `p:${k}:${g}`}
+function randPill(g){const k=wpick(['jq','pj','jx','hy','wq','mj','zy','zl','yl','ct','hx','hc'],k=>({jq:30,pj:12,jx:22,hy:16,wq:6,mj:14,qb:10,zy:4,zl:3,yl:6,ct:3,hx:3,hc:5})[k]);return `p:${k}:${g}`}
 function randFaqi(g){const ks=Object.keys(FAQI).filter(k=>FAQI[k].g===g&&!FAQI[k].use);return 'f:'+pick(ks)}
 
 // ================= 角色计算 =================
@@ -1907,7 +1808,7 @@ const powCheck=(a,b)=>clamp(.5+.35*Math.log2(a/Math.max(1,b)),.05,.95);
 function clampD(d){if(d.child){d.love=0;d.favor=100}['mood','favor','love','demon','crush'].forEach(k=>d[k]=clamp(d[k]||0,0,100));d.memory=clamp(d.memory||0,0,300)}
 function addLove(d,v){if(d.child)return;if(v>0)v*=fx(d).love;d.love=clamp(d.love+v,0,100)}
 const heartTotal=()=>Math.min(100,aliveDs().reduce((s,d)=>s+(d.crush||0),0));
-function addHeart(v,d){if(v>0){if(!d||(d.age<18&&!d.child))return;if(G.guardDays>0)v*=.5;d.crush=clamp((d.crush||0)+v*(1-(pFx().calm||0)),0,100)}else if(v<0){if(d)d.crush=clamp((d.crush||0)+v,0,100);else calmHeart(-v)}checkHeart()}
+function addHeart(v,d){if(v>0){if(!d||(d.age<18&&!d.child))return;if(v<=12)v*=2.5;if(G.guardDays>0)v*=.5;d.crush=clamp((d.crush||0)+v*(1-(pFx().calm||0)),0,100)}else if(v<0){if(d)d.crush=clamp((d.crush||0)+v,0,100);else calmHeart(-v)}checkHeart()}
 function calmHeart(v){const t=aliveDs().reduce((s,d)=>s+(d.crush||0),0);if(t<=0)return;aliveDs().forEach(d=>{d.crush=Math.max(0,(d.crush||0)-v*(d.crush||0)/t)})}
 function checkHeart(){if(heartTotal()>=100&&!G.over&&!G.heartPending){G.heartPending=true;G.queue.unshift({k:'heart'})}}
 const relKey=(a,b)=>a.id<b.id?a.id+'-'+b.id:b.id+'-'+a.id;
@@ -1928,7 +1829,7 @@ function killD(d,why){const wasHome=d.status==='home';if(G.preg&&(G.preg.carrier
 // ================= 生成徒弟 =================
 function genDisciple(){const r=R();const gender=r<.49?'m':r<.98?'f':r<.99?'futa':'inter';const pool=gender==='m'?NM_M:gender==='f'?NM_F:[...NM_M,...NM_F];
   const fk=[...FATE_POOL].sort(()=>R()-.5).slice(0,chance(.3)?3:2);const given=pick(pool);
-  return{id:0,seq:0,name:pick(SUR)+given,given,gender,age:ri(13,16),bm:ri(1,12),bd:ri(1,28),root:rollRoot(),mbti:pick(Object.keys(MB)),fates:fk,realm:ri(0,3),xp:0,mood:ri(50,72),favor:ri(25,40),love:fk.includes('ql')?15:0,crush:0,demon:ri(0,12),bag:[],log:[],goal:'balance',goalMonth:0,spur:0,away:0,injured:0,status:'home',ta:{},notes:[],jeal:0,recent:[],memory:0}}
+  return{id:0,seq:0,name:pick(SUR)+given,given,gender,age:ri(13,16),bm:ri(1,12),bd:ri(1,28),root:rollRootD(),mbti:pick(Object.keys(MB)),fates:fk,realm:ri(0,3),xp:0,mood:ri(50,72),favor:ri(25,40),love:fk.includes('ql')?15:0,crush:0,demon:ri(0,12),bag:[],log:[],goal:'balance',goalMonth:0,spur:0,away:0,injured:0,status:'home',ta:{},notes:[],jeal:0,recent:[],memory:0}}
 function joinDisciple(c){c.id=G.nid++;c.seq=++G.seq;c.joinDate=dateStr();c.status='home';c.lastContact=dn(G.date);G.ds.push(c);G.stats.recruited++;codexFate(c.fates);
   logD(c,`拜入${G.p.name}门下，排行第${c.seq}，是门中${seniorTitle(c)}。`);log(`收${c.name}为徒（${seniorTitle(c)}）。`);if(G.tut===2)G.tut=3;
   if(fx(c).rich){G.p.jade+=200;log(`${c.name}家里送来拜师礼，灵玉 +200。`)}
@@ -1946,7 +1847,7 @@ function simDay(){
   const{m,d}=G.date;
   if(G.p.bm===m&&G.p.bd===d){G.p.age++;G.pbday=true;log(`今日是你的生辰，${G.p.age}岁了。`)}
   G.ds.forEach(x=>{if(x.status!=='dead'&&x.bm===m&&x.bd===d){x.age++;if(x.status==='home'||x.status==='grad')x.bdayPending=true;if(x.status==='home'){logD(x,`${x.age}岁生辰。`);if(x.age===18)log(`${x.name}年满十八，成年了。`)}}});
-  checkSectDate();extDay();
+  checkSectDate();extDay();bdayDaily();
 }
 function simDisciple(d){
   const T=MB[d.mbti],f=fx(d),adult=d.age>=18,ta=d.ta||(d.ta={});const add=k=>ta[k]=(ta[k]||0)+1;
@@ -1990,7 +1891,7 @@ function onMonth(){
     if(d.goal==='calm')d.demon-=4;if(d.goal==='train')d.mood+=4}
     if(f.gambler&&chance(.3)){const w=chance(.5);d.mood+=w?8:-8;d.notes.push(w?'拉着同门赌骰子，赢了一把':'赌骰子输光了零花钱')}
     clampD(d)});
-  p.kpi+=k;calmHeart(3*aliveDs().filter(d=>d.crush>0).length);
+  p.kpi+=k;calmHeart(1*aliveDs().filter(d=>d.crush>0).length);
   log(`宗门月俸：灵玉 +${jade}，丹药若干。弟子教学KPI +${k}。`);
   G.ds.forEach(d=>{if(d.status==='grad')alumMonth(d);else if(d.status==='nemesis'||d.status==='demon'){if(chance(.1)&&d.realm<44)d.realm++}});
   (G.reborn||[]).forEach(r=>{if(!r.done&&dn(G.date)>=r.due&&freeSlots()>0){r.done=true;const old=getD(r.id);if(old)G.queue.push({k:'walkin',cand:rebornCand(old),src:'reborn',old:old.id})}});
@@ -2074,8 +1975,8 @@ function doAct(k,opt){if(G.over)return;const A=ACTS[k];
   G.stats.days+=days;const res=ACT_END[k](days,opt);if(res)G.queue.unshift(res);endTurn(from)}
 const ACT_END={
   clean:()=>{G.tut=2;log('你把洞府里里外外打扫了一遍。');return{k:'msg',title:'洞府焕然一新',html:`<div class="prose"><p>灵泉清澈，药圃新翻，丹房里的旧炉也擦得锃亮。这里，就是你往后修行、育人的地方了。</p><p>次日清晨，宗门钟声九响——<b>收徒大会</b>开始了！</p><p class="hint">点主页上方红色的「宗门大事」前去参加。以你现在的职位，门下只能收 1 名弟子；升职后名额会增加，最多 6 人。</p></div>`}},
-  cult:d=>{const g=Math.round(pGain()*d);addPXP(g);addHeart(-2);log(`打坐修炼${d}日，修为 +${g}。`);return null},
-  seclude:d=>{const g=Math.round(pGain()*d*1.2);addPXP(g);addHeart(-Math.min(40,d*.15));log(`闭关${d}日，修为 +${g}，心境澄明。`);return{k:'msg',title:'出关',html:`<p class="prose">${d}日闭关，你修为大进（+${g}），心如止水。洞门打开时，外面已是${short()}。</p>`}},
+  cult:d=>{const g=Math.round(pGain()*d);addPXP(g);addHeart(-.5);log(`打坐修炼${d}日，修为 +${g}。`);return null},
+  seclude:d=>{const g=Math.round(pGain()*d*1.2);addPXP(g);addHeart(-Math.min(12,d*.04));log(`闭关${d}日，修为 +${g}，心境澄明。`);return{k:'msg',title:'出关',html:`<p class="prose">${d}日闭关，你修为大进（+${g}），心如止水。洞门打开时，外面已是${short()}。</p>`}},
   teach:d=>{const ds=presentDs();if(!ds.length)return null;const lines=ds.map(x=>{const T=MB[x.mbti],f=fx(x);const g=Math.round((1+G.p.realm*.1)*rootMult(x.root)*(1+(f.cult||0))*f.teach*d*caveMult());addDXP(x,g);
       if(T.g==='SP')x.mood-=3;else if(T.g==='SJ'||T.g==='NF')x.favor+=2;clampD(x);x.notes.push(`听师尊讲道，修为 +${g}`);return `${x.name}：修为 +${g}${T.g==='SP'?'（听得直打哈欠）':''}${f.teach>1?'（过目不忘）':''}`});
     const mk=G.date.y*12+G.date.m,first=G.teachMonth!==mk;G.teachMonth=mk;const kk=first?ds.length:0;G.p.kpi+=kk;log(`开坛授课${kk?`，KPI +${kk}`:''}。`);return{k:'msg',title:'开坛授课',html:`<p class="prose">你讲了两日《玄天心经》。</p><ul class="dlog">${lines.map(l=>`<li>${l}</li>`).join('')}</ul><p class="hint">${kk?`本月首次授课，宗门KPI +${kk}`:'本月已授过课，KPI不再增加（修为照涨）'}</p>`}},
@@ -2187,7 +2088,7 @@ function showChoice(d,t,before,sib){modal({title:d.name,x:false,html:`<div class
   const box=$('#opts');t.o.forEach(o=>{const b=document.createElement('button');b.className='btn';b.textContent=fmt(o.t,d,sib);const jm=(o.e.match(/(^|\s)j(-\d+)/)||[])[2];if(jm&&G.p.jade<-jm)b.disabled=true;
     b.onclick=()=>{const extra=applyEff(d,o.e,sib);save();const r=o.r?fmt(o.r,d,sib):'';const x=extra?fmt(extra,d,sib):'';renderInteract(d,null,deltaText(before,d),[r,x].filter(Boolean).join('<br>'));if(G.queue.length)nextEventSoon()};box.appendChild(b)})}
 function giftPicker(id,line,delta,iname){const d=getD(id);const list=G.bag.filter(x=>x.n>0);
-  modal({title:`赠予 ${d.name}`,html:(line?`<div class="talk"><div class="av gf-${d.gender}">${d.name.slice(-1)}</div><div class="bubble"><span class="who">${d.name}（收下了${iname}）</span>${line}</div></div><div class="delta">${delta||''}</div>`:'')+(list.length?`<p class="hint">赠送不耗互动点，想送多少送多少。蜜饯、静心丹、忘情丹、回元丹、洗髓丹会当场服下，其余放进徒弟的乾坤囊，${TA(d)}会自己用。</p><div class="items">${list.map(x=>{const I=itemInfo(x.k);return `<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name}</div><div class="ds">${I.desc}</div></div><span class="ct">×${x.n}</span><button class="btn sm" onclick="giveItem(${id},'${x.k}')">赠予</button></div>`}).join('')}</div>`:'<p class="hint">乾坤囊空空如也。</p>'),
+  modal({title:`赠予 ${d.name}`,html:(line?`<div class="talk"><div class="av gf-${d.gender}">${d.name.slice(-1)}</div><div class="bubble"><span class="who">${d.name}（收下了${iname}）</span>${line}</div></div><div class="delta">${delta||''}</div>`:'')+(list.length?`<p class="hint">赠送不耗互动点。丹药会收进${TA(d)}的乾坤囊（${bagTotal(d.bag)}/${capStr(bagCap(d.bag))}格），需要时自己服用；生病或受伤时送回元丹、回春丹会当场服下。法器会立刻佩上。</p><div class="items">${list.map(x=>{const I=itemInfo(x.k);return `<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name}</div><div class="ds">${I.desc}</div></div><span class="ct">×${x.n}</span><button class="btn sm" onclick="giveItem(${id},'${x.k}')">赠予</button>${x.k[0]==='p'&&x.n>1?`<button class="btn sm" onclick="giveAll(${id},'${x.k}')">全部</button>`:''}</div>`}).join('')}</div>`:'<p class="hint">乾坤囊空空如也。</p>'),
   btns:[{t:'返回',fn:()=>renderInteract(d)}]})}
 function giveItem(id,k){const d=getD(id);const I=itemInfo(k);if(I.kind==='yh')return toast('引魂香是祭奠用的');if(!removeItem(G.bag,k))return;const f=fx(d),before=snap(d);let line;
   if(I.type==='p'){const g=I.g;
@@ -2400,7 +2301,7 @@ function autoFest(e){if(e._auto)return;e._auto=true;const ds=presentDs().filter(
   if((e.k==='newyear'||e.k==='mid')&&!e.feastDone){const fest=e.k==='mid'?'中秋':'过年';ds.forEach(d=>{const g=MB[d.mbti].g;if(['ESFJ','ENFJ','ISFJ','INFP','INFJ'].includes(d.mbti)){d.mood-=8;d.favor-=3;clampD(d);d.notes.push(`${fest}没有家宴，一个人对着月亮发了很久的呆`);lines.push(`${d.name}：${fest}没有家宴，${TA(d)}很失落。`)}else if(g==='SP'){d.mood+=3;clampD(d);d.notes.push(`${fest}自己溜下山凑热闹去了`);lines.push(`${d.name}：自己溜下山凑热闹去了。`)}else lines.push(`${d.name}：无所谓，照常修炼。`)})}
   if(e.k==='qingming'&&!e.walk&&ds.length){ds.forEach(d=>{d.mood+=3;d.notes.push('清明和同门结伴去后山踏青');clampD(d)})}
   if(e.k==='secret')G.secret=null;
-  if(lines.length&&e.k!=='tourney')G.queue.push({k:'msg',title:e.k==='mid'?'中秋':'新春',html:`<ul class="dlog" style="max-height:none;font-size:14px">${[...new Set(lines)].map(l=>`<li>${l}</li>`).join('')}</ul>`})}
+  if(false)G.queue.push({k:'msg',title:e.k==='mid'?'中秋':'新春',html:`<ul class="dlog" style="max-height:none;font-size:14px">${[...new Set(lines)].map(l=>`<li>${l}</li>`).join('')}</ul>`})}
 function tourneyDisciples(ds){let kpi=0;const rows=ds.map(d=>{const score=dPower(d)*(.8+R()*.45);const base=basePow(4+(d.age-13)*1.4);let t;
     if(score>base*1.8){kpi+=12;const k=randFaqi(Math.min(3,rollGrade(G.p.realm)+1));addItem(d.bag,k);t=`夺得魁首！宗门赏${itemInfo(k).name}`;d.mood+=15;d.favor+=5;unlock('dchamp')}
     else if(score>base*1.15){kpi+=5;addItem(d.bag,'p:jq:1');t='跻身前十，得玄品聚气丹';d.mood+=6}
@@ -2424,9 +2325,9 @@ function extMonth(){const{y,m}=G.date;G.ds.forEach(rogueMonth);
       if(d.age>=18&&!G.queue.some(e=>e.id===d.id)){if(d.love>=50&&d.status!=='demon'&&chance(.05))G.queue.push({k:'pester',id:d.id});else if(d.demon>=60&&d.love<50&&chance(.05))G.queue.push({k:'ambush',id:d.id})}}
     const risky=d.status!=='grad'||RISKY.includes(d.career);if(chance(risky?.015:.004)){if((d.favor>=40||d.love>=50)&&d.status!=='demon')G.queue.push({k:'sos',id:d.id});else if(chance(.35)){killD(d,'在外遭遇不测，身死道消。');G.queue.push({k:'msg',title:'噩耗',html:`<p class="prose">飞鹤带回消息：${d.name}在外遭遇不测，已经不在了。</p>`})}else logD(d,'在外受了重伤，独自熬了过来。')}})}
 // ---------- 修葺洞天 / 乾坤囊 ----------
-function openRenovate(){const lv=G.caveLv||0;if(lv>=3)return modal({title:'修葺洞天',html:`<p class="prose">${G.cave}已是天品洞天，灵气氤氲，仙鹤盘旋。没什么可修的了。</p>`,btns:[{t:'返回',fn:openActs}]});const n=lv+1;
+function openRenovate(){const lv=G.caveLv||0;if(lv>=3)return modal({title:'修葺洞天',html:`<p class="prose">${G.cave}已是天品洞天，灵气氤氲，仙鹤盘旋。没什么可修的了。</p>`,btns:[{t:'关闭',fn:closeModal}]});const n=lv+1;
   modal({title:'修葺洞天',html:`<p class="prose">请器峰匠师重修${G.cave}：布聚灵阵、引地脉灵泉、换灵玉梁柱。</p><dl class="kv"><dt>当前</dt><dd>${CAVE_N[lv]}洞天 · 修炼效率 ×${CAVE_MULT[lv]}</dd><dt>修葺后</dt><dd>${CAVE_N[n]}洞天 · 修炼效率 ×${CAVE_MULT[n]}</dd><dt>花费</dt><dd>灵玉 ${CAVE_COST[n]}（现有 ${G.p.jade}）</dd><dt>耗时</dt><dd>${CAVE_DAYS[n]} 日</dd></dl><p class="hint">效率对你和徒弟都生效，讲课也会更有效。</p>`,
-   btns:[{t:'返回',fn:openActs},{t:'开工',cls:'pri',dis:G.p.jade<CAVE_COST[n],fn:()=>{G.p.jade-=CAVE_COST[n];doAct('renovate',{days:CAVE_DAYS[n]})}}]})}
+   btns:[{t:'关闭',fn:closeModal},{t:'开工',cls:'pri',dis:G.p.jade<CAVE_COST[n],fn:()=>{G.p.jade-=CAVE_COST[n];doAct('renovate',{days:CAVE_DAYS[n]})}}]})}
 ACT_END.renovate=d=>{G.caveLv=(G.caveLv||0)+1;if(G.caveLv>=3)unlock('cave3');log(`${G.cave}修葺一新，晋为${CAVE_N[G.caveLv]}洞天。`);homeDs().forEach(x=>{x.mood+=10;clampD(x)});return{k:'msg',title:'洞天落成',html:`<p class="big-c">${CAVE_N[G.caveLv]}洞天</p><p class="prose">${['','灵泉引入了院中，檐角挂上了清心铃。','聚灵阵日夜运转，洞府里终年飘着淡淡的灵雾。','仙鹤在梁上筑巢，灵脉化作溪流绕府而过。这里已是一方小洞天。'][G.caveLv]}</p><p class="hint">修炼效率 ×${CAVE_MULT[G.caveLv]}</p>`}};
 ACT_END.idle=()=>{log(pick(['虚度一日，看了一整天的云。','虚度一日，在躺椅上睡了个长长的午觉。','虚度一日，什么也没想。']));return null};
 function upBag(){const lv=G.bagLv||0;if(lv>=3)return;const c=BAG_COST[lv+1];if(G.p.jade<c)return toast('灵玉不足');G.p.jade-=c;G.bagLv=lv+1;toast(`乾坤囊升为${GR[G.bagLv]}品`);save();openBag('p')}
@@ -2562,13 +2463,13 @@ function hurtP(pct,killer){if(G.over)return;G.p.hp=hpOf(G.p)-hpMax(G.p)*pct/100;
 function healP(pct){G.p.hp=Math.min(hpMax(G.p),hpOf(G.p)+hpMax(G.p)*pct/100)}
 function regen(o,boost=1){const p=hpPct(o);const r=p<.1?.005:p<.3?.01:.03;o.hp=Math.min(hpMax(o),hpOf(o)+hpMax(o)*r*boost)}
 function dDaily(d){autoMed(d);if(d.sick&&chance(.015)){d.sick=false;d.notes.push('病自己好了')}if(d.sick){d.hp=hpOf(d)-hpMax(d)*.02;if(d.hp<=0){d.hp=0;killD(d,'久病不治。');G.queue.push({k:'msg',title:'噩耗',html:`<p class="prose">${d.name}病了太久，没能熬过去。</p>`});return false}}else regen(d);
-  if(!d.sick&&d.realm<11&&chance(.0015)){d.sick=true;d.notes.push('病倒了');G.queue.push({k:'msg',title:'生病',html:`<p class="prose">${d.name}病倒了，烧得迷迷糊糊，嘴里喊着师尊。</p><p class="hint">筑基之前体弱易病。请赠予祛病丹、回元丹或回春丹医治，拖着不管会一天天虚弱下去。</p>`})}return true}
+  if(!d.sick&&d.realm<11&&chance(.0015)){d.sick=true;d.notes.push('病倒了');G.queue.push({k:'msg',title:'生病',html:`<p class="prose">${d.name}病倒了，烧得迷迷糊糊，嘴里喊着师尊。</p><p class="hint">筑基之前体弱易病。召见时「照料」三次可以治好，也可以送回元丹、回春丹。拖着不管会一天天虚弱下去。</p>`})}return true}
 // ================= 行事前置 =================
 const ACT_PRE={
   explore:(days,o)=>{(o.team||[]).forEach(id=>{const d=getD(id);if(d)d.away=Math.max(d.away,days)})},
   heal:()=>{G.resting=true}
 };
-ACT_END.heal=d=>{G.resting=false;calmHeart(Math.min(30,d*.3));log(`静养${d}日，伤势好转。`);return{k:'msg',title:'静养',html:`<p class="prose">${d}日静养，你的气血恢复到 ${Math.floor(hpOf(G.p))}/${hpMax(G.p)}。</p>`}};
+ACT_END.heal=d=>{G.resting=false;calmHeart(Math.min(8,d*.08));log(`静养${d}日，伤势好转。`);return{k:'msg',title:'静养',html:`<p class="prose">${d}日静养，你的气血恢复到 ${Math.floor(hpOf(G.p))}/${hpMax(G.p)}。</p>`}};
 // ================= 下山游历（含游山玩水） =================
 let EXT={team:[],mode:'play',days:10};
 function openExplore(){const ds=presentDs().filter(d=>!(d.child&&d.age<6)&&!injD(d)&&!d.sick);EXT.team=EXT.team.filter(id=>ds.some(d=>d.id===id));const d=clamp(EXT.days,3,300);const miss=missedFest(d);const play=EXT.mode==='play';
@@ -2585,8 +2486,8 @@ function exploreRun(days,o){const team=(o.team||[]).map(getD).filter(d=>d&&d.sta
   const names=team.length?team.map(d=>d.name).join('、'):'你';const tp=pPower()+team.reduce((s,d)=>s+dPower(d)*.5,0);const lines=[];let cands=0;const grads=G.ds.filter(d=>d.status==='grad');const foes=['魔修','妖狼王','劫修','千年树妖','血煞宗弟子','化形蛇妖','尸傀','山贼头子','邪道散修'];
   for(let i=0;i<n&&!G.over;i++){const W=play?{fun:40,calm:20,jade:6,herb:10,fight:4,faqi:2,ruin:3,cand:freeSlots()-cands>0?4:0,meet:grads.length?4:0,trouble:3}:{fun:6,calm:8,jade:22,herb:20,fight:24,faqi:6+luck*40,ruin:7+luck*20,cand:freeSlots()-cands>0?8:0,meet:grads.length?5:0,trouble:6};
     const ev=wpick(Object.keys(W),k=>W[k]);
-    if(ev==='fun'){const tt=team.length?pick(team).name:'你';let ft;for(let q=0;q<8;q++){ft=pick(FUN_TXT).replace(/\{t\}/g,tt);if(!lines.includes(ft))break}lines.push(ft);team.forEach(d=>{d.mood+=8;d.favor+=3;if(d.age>=18&&!d.child&&d.love>=30){addLove(d,2);addHeart(1,d)}if(d.child)addHeart(1,d);clampD(d)});calmHeart(3);healP(5)}
-    else if(ev==='calm'){calmHeart(5);healP(8);lines.push(pick(EXP_TXT.calm))}
+    if(ev==='fun'){const tt=team.length?pick(team).name:'你';let ft;for(let q=0;q<8;q++){ft=pick(FUN_TXT).replace(/\{t\}/g,tt);if(!lines.includes(ft))break}lines.push(ft);team.forEach(d=>{d.mood+=8;d.favor+=3;if(d.age>=18&&!d.child&&d.love>=30){addLove(d,2);addHeart(1,d)}if(d.child)addHeart(1,d);clampD(d)});calmHeart(1);healP(5)}
+    else if(ev==='calm'){calmHeart(2);healP(8);lines.push(pick(EXP_TXT.calm))}
     else if(ev==='jade'){const j=Math.round(ri(18,66)*(1+r/20));G.p.jade+=j;lines.push(pick(EXP_TXT.jade).replace('{v}',j))}
     else if(ev==='herb'){const k=randPill(rollGrade(r,luck));addItem(G.bag,k);lines.push(pick(EXP_TXT.herb).replace('{v}',itemInfo(k).name))}
     else if(ev==='fight'){const foe=pick(foes);const e=basePow(r+ri(-3,3));if(chance(powCheck(tp,e))){const j=Math.round(ri(36,108)*(1+r/20));G.p.jade+=j;let s=pick(EXP_TXT.win).replace('{foe}',foe).replace('{v}',j);if(chance(.25)){const k=randFaqi(rollGrade(r,luck));addItem(G.bag,k);s+=`，以及${itemInfo(k).name}`}lines.push((team.length?`${names}与你并肩作战。`:'')+s+'。');hurtP(ri(0,8));team.forEach(d=>{addDXP(d,needXP(d.realm)*.06);d.favor+=2;clampD(d)})}
@@ -2606,7 +2507,7 @@ const TASK_TIME=[['驻守北境烽火台',60,100],['远行送信至天剑宗',20
 function genTasks(){const r=G.p.realm,out=[];const n=ri(3,5);for(let i=0;i<n;i++){const ty=wpick(['fight','donate','item','time'],k=>({fight:3,donate:2,item:2,time:4})[k]);
   if(ty==='fight'){const diff=clamp(r+ri(-5,6),5,44);out.push({ty,n:pick(TASK_FIGHT),days:ri(5,25),diff,kpi:4+Math.floor(diff/4),jade:15+diff*3})}
   else if(ty==='donate'){const cost=Math.round(ri(80,400)*(1+G.p.rank*.3)/10)*10;out.push({ty,n:pick(TASK_DONATE),days:1,cost,kpi:Math.round(cost/35),jade:0})}
-  else if(ty==='item'){const g=Math.min(3,rollGrade(r));const k=chance(.75)?`p:${pick(['jq','jx','hy','pj','hc','qb'])}:${g}`:randFaqi(g);const c=k[0]==='f'?1:ri(1,2);out.push({ty,n:`上缴${itemInfo(k).name}${c>1?'×'+c:''}`,days:1,need:k,cnt:c,kpi:5+g*5+(k[0]==='f'?5:0),jade:10+g*15})}
+  else if(ty==='item'){const g=Math.min(3,rollGrade(r));const k=chance(.75)?`p:${pick(['jq','jx','hy','pj','hc'])}:${g}`:randFaqi(g);const c=k[0]==='f'?1:ri(1,2);out.push({ty,n:`上缴${itemInfo(k).name}${c>1?'×'+c:''}`,days:1,need:k,cnt:c,kpi:5+g*5+(k[0]==='f'?5:0),jade:10+g*15})}
   else{const t=pick(TASK_TIME);const days=ri(t[1],t[2]);out.push({ty,n:t[0],days,risky:!!t[3],diff:clamp(r-2,5,44),kpi:Math.round(days/6)+1,jade:days*2})}}G.tasks=out;G.taskMonth=G.date.y*12+G.date.m}
 function taskReq(t){if(t.ty==='fight')return `推荐修为：${REALMS[t.diff]}（会动手，可能受伤）`;if(t.ty==='donate')return `需捐灵玉 ${t.cost}`;if(t.ty==='item')return `需上缴：${itemInfo(t.need).name}×${t.cnt}（现有 ${countItem(G.bag,t.need)}）`;return t.risky?'途中可能遇险':'安稳的差事'}
 function taskOK(t){if(t.ty==='donate')return G.p.jade>=t.cost;if(t.ty==='item')return countItem(G.bag,t.need)>=t.cnt;return true}
@@ -2730,6 +2631,82 @@ function sibBdayGifts(d){if(!d||d.status!=='home')return;presentDs().forEach(o=>
   const its=o.bag.filter(x=>x.k[0]==='p');let what;if(its.length&&chance(.4)){const k=pick(its).k;removeItem(o.bag,k);addItem(d.bag,k);what=itemInfo(k).name}else what=pick(SIB_HAND);
   addRel(o,d,3);d.mood+=5;clampD(d);logD(d,`生辰，${sibName(d,o)}送了${what}。`);logD(o,`给${sibName(o,d)}送了生辰礼：${what}。`)})}
 </script>
+<script>
+// ================= 弟子灵根：都是主角，没有四五灵根 =================
+function rollRootD(){if(chance(.12))return{els:[pick(MUT)],mut:true};const n=wpick([3,2,1],x=>({3:40,2:35,1:25})[x]);return{els:[...ELEM].sort(()=>R()-.5).slice(0,n),mut:false}}
+// ================= 生辰：前后三日 =================
+function doy(m,d){let s=0;for(let i=0;i<m-1;i++)s+=DIM[i];return s+d}
+function bdDiff(x){let v=doy(x.bm,x.bd)-doy(G.date.m,G.date.d);if(v>182)v-=365;if(v<-182)v+=365;return v}
+function bdayDaily(){G.ds.forEach(x=>{if(!['home','grad'].includes(x.status)){x.bday=false;return}const w=Math.abs(bdDiff(x))<=3;
+  if(w&&!x.bday){x.bday=true;x.bdayGift=false;if(x.status==='home')sibBdayGifts(x)}
+  else if(!w&&x.bday){if(!x.bdayGift){x.mood-=10;x.favor-=3;if(x.status==='grad')x.demon+=2;clampD(x);logD(x,x.status==='grad'?'生辰那几日，没等到师尊的飞鹤。':'生辰那几日没收到师尊的礼物，一个人难过了很久。')}x.bday=false}})}
+function bdayExpire(){}
+function bdayTurn(){const now=[],soon=[];const y=G.date.y;G.ds.forEach(x=>{if(!['home','grad'].includes(x.status))return;const v=bdDiff(x);
+    if(x.bday&&!x.bdayGift&&x.bdNow!==y){x.bdNow=y;now.push(x.id)}else if(v>3&&v<=30&&x.bdSoon!==y){x.bdSoon=y;soon.push(x.id)}});
+  if((now.length||soon.length)&&PREF.bday)G.queue.push({k:'dbday',ids:now,soon});if(G.pbday){G.pbday=false;G.queue.push({k:'pbday'})}}
+EV.dbday=e=>{const ds=(e.ids||[]).map(getD).filter(d=>d&&d.bday&&!d.bdayGift);const ss=(e.soon||[]).map(getD).filter(Boolean);if(!ds.length&&!ss.length)return nextEvent();
+  modal({title:'生辰',html:`${ds.length?`<p class="prose">${ds.map(d=>d.name).join('、')}正逢生辰（前后三日内）。</p><div class="items">${ds.map(d=>`<div class="item gf-${d.gender}"><div class="info"><div class="nm">${d.name}</div><div class="ds">${d.bm}月${d.bd}日 · ${d.status==='grad'?'已出师':seniorTitle(d)}</div></div>${d.status==='home'?`<button class="btn sm" onclick="giftPicker(${d.id})">送礼</button>`:`<button class="btn sm" onclick="openParcel(${d.id},true)">寄礼</button>`}</div>`).join('')}</div><p class="hint">生辰这几日送礼效果翻倍，一切互动效果也翻倍。错过了，${ds.length>1?'他们':TA(ds[0])}会难过。</p>`:''}
+   ${ss.length?`<div class="blk"><h4>生辰将至</h4>${ss.map(d=>`<p class="hint">${d.name}：${d.bm}月${d.bd}日（还有 ${bdDiff(d)} 天）</p>`).join('')}<p class="fdesc">别闭关太久，错过了就补不回来了。</p></div>`:''}`,btns:[{t:'知道了',cls:'pri',fn:closeModal}]})};
+// ================= 转世 / 夺舍 =================
+const _walkin=EV.walkin;
+EV.walkin=e=>{if(e.src!=='reborn')return _walkin(e);const d=getD(e.old);if(!d||d.status!=='dead')return nextEvent();const ds=d.demon>=50;const free=freeSlots();
+  evModal(ds?'夺舍归来':'转世归来',`<p class="prose">${ds?`一个十四岁的孩子站在洞府外，眼神却老得可怕。${TA(d)}冲你笑了笑：“师尊，好久不见。”<br>那是${d.name}的笑。一模一样。`:`一个十四岁的孩子跪在洞府外。看见你的那一刻，${TA(d)}愣住了，脱口而出：“师尊……”<br>同样的名字，同样的眉眼——${d.name}。`}</p>${candCard(d,-1,false)}<p class="hint">${ds?'夺舍：带着前世的全部记忆归来，心魔会持续滋长。':'转世：前世的一切都在，只是记忆还沉睡着。等好感满了，或许会想起来。'}</p>`,
+   [{t:free>0?'收入门下':`门下已满（${slotsMax()}人）`,cls:'pri',dis:free<=0,fn:()=>{reviveD(d,ds?'ds':'zs');closeModal()}},opt('婉拒',()=>{d.rebornSched=false;closeModal()})])};
+function reviveD(d,type){d.status='home';d.age=14;d.hp=null;d.sick=false;d.away=0;d.reborn=type;d.mem=type==='ds';d.rebornSched=false;d.joinDate=dateStr();d.bday=false;d.endDate=null;d.lastContact=dn(G.date);if(type==='ds')d.demon=Math.max(d.demon,50);clampD(d);
+  const t=type==='ds'?'夺舍':'转世';logD(d,`${t}归来，十四岁，重新拜入${G.p.name}门下。`);log(`${d.name}${t}归来，重回师门。`);unlock('reborn');homeDs().forEach(o=>{if(o!==d&&G.rel[relKey(o,d)]==null)G.rel[relKey(o,d)]=0})}
+const _dDaily=dDaily;
+dDaily=function(d){const r=_dDaily(d);if(!r)return r;if(d.reborn==='ds')d.demon=clamp(d.demon+.08*MB[d.mbti].dark,0,100);
+  if(d.reborn==='zs'&&!d.mem&&d.favor>=100&&!G.queue.some(e=>e.k==='remember'&&e.id===d.id))G.queue.push({k:'remember',id:d.id});
+  if(G.date.d===1&&chance(.4)){const eq=ensureEq(d);const best=d.bag.filter(x=>x.k[0]==='f').sort((a,b)=>itemInfo(b.k).g-itemInfo(a.k).g)[0];if(best){if(eq.length<3){removeItem(d.bag,best.k);eq.push(best.k);d.notes.push(`佩上了${itemInfo(best.k).name}`)}else{let wi=0;eq.forEach((x,i)=>{if(itemInfo(x).g<itemInfo(eq[wi]).g)wi=i});if(itemInfo(best.k).g>itemInfo(eq[wi]).g){const old=eq[wi];removeItem(d.bag,best.k);eq[wi]=best.k;addItem(d.bag,old);d.notes.push(`把${itemInfo(old).name}换成了${itemInfo(best.k).name}`)}}}}
+  return r};
+EV.remember=e=>{const d=getD(e.id);if(!d||d.mem)return nextEvent();d.mem=true;logD(d,'忆起了前世的一切。');log(`${d.name}忆起了前世。`);
+  modal({title:'前尘',html:`<p class="prose">${d.name}忽然停下了手里的事，怔怔地看着你，很久很久。<br>“师尊……”${TA(d)}的声音在发抖，“我想起来了。我全都想起来了。”</p>`,btns:[{t:'……',cls:'pri',fn:closeModal}]})};
+const _rollEvent=rollEvent;
+rollEvent=function(d){if(d.reborn==='ds'&&d.demon>=90&&chance(.4))return{k:'awaken',id:d.id};return _rollEvent(d)};
+const _chatLine=chatLine;
+chatLine=function(d){if(d.truth){d.truth=false;return truthLine(d)}if(d.mem&&MEM_T[d.mbti]&&chance(.5))return pick(MEM_T[d.mbti]);return _chatLine(d)};
+// ================= 徒弟自己安排丹药 =================
+function autoMed(d){const b=d.bag;const use=(k,msg)=>{removeItem(b,k);d.notes.push(msg.replace('%',itemInfo(k).name))};
+  if(d.sick){const k=bestPill(b,'hy')||bestPill(b,'hc');if(k){use(k,'病了，服下自己收着的%');d.sick=false;d.tend=0;healD(d,20)}}
+  if(hpPct(d)<.6){const k=bestPill(b,'hy')||bestPill(b,'hc');if(k){const I=itemInfo(k);use(k,'受了伤，服下了%');healD(d,I.kind==='hc'?100:HY[I.g])}}
+  if(d.mood<40){const k=bestPill(b,'mj')||bestPill(b,'zy');if(k){const I=itemInfo(k);use(k,'心情不好，吃了一颗%');d.mood+=I.kind==='mj'?MJ[I.g]*(fx(d).foodie?3:1):[15,25,40,60][I.g]}}
+  if(chance(.03)){const k=bestPill(b,'ct');if(k&&(d.hpf||0)<200){use(k,'服下%淬炼筋骨');d.hpf=Math.min(200,(d.hpf||0)+[10,20,30,40][itemInfo(k).g])}}
+  if(chance(.05)){const k=bestPill(b,'yl');if(k){use(k,'修炼时服下了%');addDXP(d,needXP(d.realm)*[1,2,3,5][itemInfo(k).g]/100)}}
+  if(chance(.01)){const k=bestPill(b,'xs');if(k&&d.root.els.length>1&&!d.root.mut){use(k,'服下%，洗去了一条灵根');d.root.els.splice(ri(0,d.root.els.length-1),1)}}
+  if(d.age>=18&&d.love>=70&&d.favor<40&&chance(.04)){const k=bestPill(b,'wq');if(k){use(k,'偷偷服下了%，想忘掉一些事');addLove(d,-WQ[itemInfo(k).g])}}
+  if(chance(.02)){const k=bestPill(b,'zl');if(k){use(k,'误服了%');d.truth=true}}
+  if(countItem(b,'p:fs:3')&&!d.revive){removeItem(b,'p:fs:3');d.revive=true}
+  clampD(d)}
+// ================= 赠予（重写）：丹药一律收着 =================
+function giveItem(id,k,quiet){const d=getD(id);const I=itemInfo(k);if(I.kind==='yh'){toast('引魂香是祭奠用的');return null}
+  if(I.type==='p'&&!d.bag.some(x=>x.k===k)&&d.bag.length>=bagCap(d.bag)&&!((I.kind==='hy'||I.kind==='hc')&&(d.sick||hpPct(d)<1))){toast(`${d.name}的乾坤囊满了（${bagCap(d.bag)}格），装不下新的东西`);return null}
+  if(!removeItem(G.bag,k))return null;const before=snap(d),pre=snap2(d);let line;
+  if(I.type==='p'){const g=I.g;
+    if((I.kind==='hy'||I.kind==='hc')&&(d.sick||hpPct(d)<1)){healD(d,I.kind==='hc'?100:HY[g]+(d.sick?10:0));d.sick=false;d.tend=0;d.favor+=4;line='（接过药就服下了，脸色好多了）谢谢{s}……弟子好多了。'}
+    else{addItem(d.bag,k);d.favor+=2+g;line=I.kind==='mj'?'（眼睛一亮，小心地收了起来）留着心情不好的时候吃！':I.kind==='jq'||I.kind==='yl'?'弟子会在修炼时用上的，谢谢{s}！':pick(REACT.gift.good)}}
+  else{const how=equipD(d,k);d.favor+=6*(I.g+1);line=(d.age>=18&&d.love>=50?pick(REACT.gift.love):pick(REACT.gift.good))+`（${how}${I.name}）`}
+  if(d.age>=18&&!d.child&&d.love>=40){addLove(d,2);addHeart(3,d)}
+  let extra='';if(d.bday){doubleDelta(d,pre);if(!d.bdayGift){d.bdayGift=true;line=pick(BDAY_T[d.mbti]);logD(d,`生辰收到了师尊的礼物：${I.name}。`)}extra='（生辰，效果翻倍）'}
+  jealousy(d,I.type==='f'?1.5:.6);logD(d,`收到师尊赠予的${I.name}。`);clampD(d);save();const res={line:fmt(line||'谢谢{s}。',d),delta:deltaText(before,d)+extra,name:I.name};if(!quiet)giftPicker(id,res.line,res.delta,res.name);return res}
+function giveAll(id,k){const n=countItem(G.bag,k);let last=null,c=0;const before=snap(getD(id));for(let i=0;i<n;i++){const r=giveItem(id,k,true);if(!r)break;last=r;c++}if(last)giftPicker(id,last.line,deltaText(before,getD(id))+`（共赠出 ${c} 枚）`,last.name+(c>1?'×'+c:''));else giftPicker(id)}
+function useAll(k){let n=countItem(G.bag,k);while(n>0){usePill(k);const m=countItem(G.bag,k);if(m>=n)break;n=m}openBag('p')}
+// ================= 照料 =================
+const _interact2=interact;
+interact=function(id,act){if(act!=='tend')return _interact2(id,act);const d=getD(id);if(!canTalk(d))return;if(!(d.sick||injD(d)))return toast(`${d.name}好好的，不需要照料`);if(apLeft()<=0)return toast('本回合互动点已用完');useAp();const before=snap(d),pre=snap2(d);let line;
+  if(d.sick){d.tend=(d.tend||0)+1;if(d.tend>=3){d.sick=false;d.tend=0;healD(d,15);line='（烧退了，睁开眼看见你还守在床边）……{s}一直在吗？';logD(d,'病中师尊照料了三回，终于好了。')}else line=pick(['（迷迷糊糊地拉住你的袖子）{s}……别走……','（喝完你喂的药，皱着脸）好苦……可是{s}喂的，不苦。','（烧得脸通红）弟子没事……{s}别担心……'])+`（照料 ${d.tend}/3）`}
+  else{healD(d,10);line=pick(['（你替{d}换了药）……谢谢{s}。','（{d}靠在床头，看着你忙前忙后）{s}，您不用亲自来的……','（疼得龇牙咧嘴，却还在笑）有{s}在，伤好得快。'])}
+  d.favor+=4;d.mood+=5;addLove(d,2*MB[d.mbti].rom*(d.sick||d.tend?2:1));if(d.age>=18&&!d.child&&d.love>=30)addHeart(3,d);if(d.child)addHeart(2,d);if(d.bday)doubleDelta(d,pre);jealousy(d,.6);clampD(d);save();renderInteract(d,fmt(line,d),deltaText(before,d)+(d.bday?'（生辰，效果翻倍）':''))};
+// 互动越多，心越乱
+const _interact3=interact;
+interact=function(id,act){const d=getD(id);const ap=apLeft();const r=_interact3(id,act);if(d&&apLeft()<ap&&['chat','care','toast'].includes(act)&&d.age>=18&&!d.child&&d.love>=30){const c0=d.crush||0;addHeart(2+d.love/25,d);const g=Math.round((d.crush||0)-c0);const el=document.querySelector('#modal .delta');if(el&&g>0)el.textContent=(el.textContent?el.textContent+' · ':'')+`心又乱了几分（心动 +${g}）`}return r};
+// ================= 藏宝阁：买 / 卖 =================
+function openShop(tab){tab=tab||'buy';const head=`<div class="tabs"><button class="${tab==='buy'?'on':''}" onclick="openShop('buy')">买</button><button class="${tab==='sell'?'on':''}" onclick="openShop('sell')">卖</button></div><p class="hint">灵玉 ${G.p.jade}。${tab==='buy'?'货品每月初更换。':'按三成价格收购。'}</p>`;
+  const body=tab==='buy'?`<div class="items">${G.shop.map((x,i)=>{const I=itemInfo(x.k);return `<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name}</div><div class="ds">${I.desc}</div></div><span class="ct">余${x.n}</span><button class="btn sm" ${x.n<=0||G.p.jade<I.price?'disabled':''} onclick="buy(${i})">${I.price}灵玉</button></div>`}).join('')}</div>`
+   :`<div class="items">${G.bag.length?G.bag.map(x=>{const I=itemInfo(x.k),v=Math.round(I.price*.3);return `<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name} <span class="ct">×${x.n}</span></div><div class="ds">单价 ${v} 灵玉</div></div><button class="btn sm" onclick="sellIt('${x.k}')">卖1</button>${x.n>1?`<button class="btn sm" onclick="sellIt('${x.k}',1)">全卖 ${v*x.n}</button>`:''}</div>`}).join(''):'<p class="hint">乾坤囊空空如也。</p>'}</div>`;
+  modal({title:'藏宝阁',html:head+body,btns:[{t:'离开',cls:'pri',fn:closeModal}]})}
+function buy(i){const x=G.shop[i],I=itemInfo(x.k);if(G.p.jade<I.price||x.n<=0)return;const had=G.bag.some(y=>y.k===x.k);if(!had&&G.bag.length>=bagCap(G.bag))return toast('乾坤囊已满，先腾出格子吧');G.p.jade-=I.price;x.n--;addItem(G.bag,x.k);toast(`买下${I.name}`);save();openShop('buy')}
+function sellIt(k,all){const I=itemInfo(k);const n=all?countItem(G.bag,k):1;if(!removeItem(G.bag,k,n))return;const v=Math.round(I.price*.3)*n;G.p.jade+=v;toast(`卖出${I.name}×${n}，灵玉 +${v}`);save();openShop('sell')}
+</script>
 <audio id="bgm" src="BackgroundMusic.mp3" loop preload="auto"></audio>
 <script>
 // ================= 背景音乐 =================
@@ -2763,7 +2740,7 @@ const apDots=n=>'<i class="on"></i>'.repeat(Math.max(0,Math.min(n,8)))+'<i></i>'
 // ================= 主渲染 =================
 function render(){if(!G)return renderTitle();if(G.over)renderEnding();else renderMain();if(G.sect&&G.sect!=='玄天宗'){const a=$('#app');a.innerHTML=sectify(a.innerHTML)}}
 function renderTitle(){document.body.className='';const sv=loadSave();const has=!!sv&&!sv.over;$('#app').innerHTML=`<div class="title-screen">
-  <div class="vtitle"><div class="bigseal">为人<br>师表</div><h1>无情道教资保卫战</h1><div class="sub">师尊是一个高危职业</div></div>
+  <div class="vtitle"><div class="bigseal">玄天<br>宗印</div><h1>无情道教资保卫战</h1><div class="sub">师尊是一个高危职业</div></div>
   <p class="tagline">你修的是无情道，动心即死。<br>可宗门要你收徒，而你的每个徒弟，都长着一张男女主角的脸。</p>
   <div class="title-btns">${has?'<button class="btn pri" onclick="continueGame()">继续修行</button>':''}<button class="btn ${has?'':'pri'}" onclick="renderSetup()">${has?'重新入道':'踏入仙途'}</button><button class="btn" onclick="openCodex('fate')">图鉴</button><button class="btn" data-bgm-label onclick="bgmToggle()">${BGM.on?'背景音乐：开':'背景音乐：关'}</button></div></div>`}
 function continueGame(){G=loadSave();if(!G)return renderTitle();G.feast=null;G.sect=G.sect||'玄天宗';G.resting=false;G.caveLv=G.caveLv||0;G.bagLv=G.bagLv||0;G.sr=null;render();nextEvent()}
@@ -2773,7 +2750,7 @@ let S=null;
 function renderSetup(){if(!S)S={name:'',gender:'m',age:100,bm:3,bd:15,root:rollRoot(),rolls:0};
   const months=Array.from({length:12},(_,i)=>`<option value="${i+1}" ${S.bm===i+1?'selected':''}>${i+1}月</option>`).join('');
   const days=Array.from({length:DIM[S.bm-1]},(_,i)=>`<option value="${i+1}" ${S.bd===i+1?'selected':''}>${i+1}日</option>`).join('');
-  $('#app').innerHTML=`<header class="top"><div><div class="date">修仙界 · 人物名录</div><div class="cave">立命</div></div></header>
+  $('#app').innerHTML=`<header class="top"><div><div class="date">玄天宗 · 长老名录</div><div class="cave">立命</div></div></header>
   <div class="form">
    <div class="field"><label class="l" for="f-name">道号</label><input type="text" id="f-name" maxlength="4" placeholder="无名" value="${esc(S.name)}" oninput="S.name=this.value"><p class="hint">1至4个字，留空则为“无名”。</p></div>
    <div class="field"><label class="l">性别</label><div class="seg">${Object.entries(GN).map(([k,v])=>`<button class="gf-${k} ${S.gender===k?'on':''}" style="border:1.5px solid" onclick="S.gender='${k}';renderSetup()">${v}</button>`).join('')}</div><p class="hint">不影响任何剧情，本游戏全性向友好。</p></div>
@@ -2792,7 +2769,7 @@ function storyNext(i){if(i===0){const v=($('#f-sect').value||'').trim();S.sect=v
 function newGame(){G={v:3,sect:S.sect||'玄天宗',date:{y:100,m:5,d:31},p:{name:S.name,gender:S.gender,age:S.age,bm:S.bm,bd:S.bd,root:S.root,realm:20,xp:0,jade:200,rank:1,kpi:0,brk:0,eq:[]},
   cave:S.cave,bag:[],ds:[],ap:3,log:[],mail:[],queue:[],events:[],shop:[],tut:1,stats:{days:0,recruited:0,grads:0,refused:0},nid:1,seq:0,rel:{},reborn:[],over:null,feast:null};
   if(S.root.mut)unlock('mut');
-  addItem(G.bag,'p:jq:0',3);addItem(G.bag,'p:jx:0',2);addItem(G.bag,'p:mj:0',2);addItem(G.bag,'f:zp');addItem(G.bag,'p:qb:0');refreshShop();genTasks();S=null;log(`入主${G.cave}。`);save();render();showGuide()}
+  addItem(G.bag,'p:jq:0',3);addItem(G.bag,'p:jx:0',2);addItem(G.bag,'p:mj:0',2);addItem(G.bag,'f:zp');refreshShop();genTasks();S=null;log(`入主${G.cave}。`);save();render();showGuide()}
 function showGuide(){modal({title:`${G.cave} · 洞府指南`,html:`<div class="prose" style="font-size:14px">
   <p><b>名牌</b>：修为、气血、灵玉、战力与宗门KPI。气血低于三成为受伤、一成为重伤，无法修炼只能静养；归零即死。修为满了遇到瓶颈，要手动「冲击」突破，失败会跌落一个小境界。越往后越难。</p>
   <p><b style="color:var(--cinnabar)">动心</b>：你对每个成年徒弟都有一份“心动”，主页的动心条是所有心动之和，满 100 即道心破碎。接受徒弟的好意、对其格外好，心动就会涨。静心丹、闭关、游山玩水可以平复。</p>
@@ -2807,7 +2784,7 @@ function renderMain(){document.body.className='cave-'+(G.caveLv||0);const p=G.p,
   const ds=homeDs();const mx=slotsMax();const nSlots=Math.max(ds.length,mx);const cells=[];for(let i=0;i<Math.max(3,Math.ceil(Math.max(nSlots,1)/3)*3);i++){if(ds[i])cells.push(dCard(ds[i]));else if(i<mx)cells.push(`<div class="dcard empty"><div class="av">空</div><div class="dn">虚位以待</div><div class="dr">${G.tut<3?'收徒大会':'六月收徒 · 游历有缘'}</div></div>`);else{const need=SLOTS.findIndex(s=>s>i);cells.push(`<div class="dcard empty locked"><div class="av">锁</div><div class="dn">未解锁</div><div class="dr">${need>=0?'升至'+RANKS[need]:''}</div></div>`)}}
   const bp=canBreak()?Math.round(clamp(BREAK[p.realm][0]+p.brk,0,.98)*100):0;
   $('#app').innerHTML=`
-  <header class="top"><div><div class="date num">${dateStr()}</div><div class="cave">${esc(G.cave)}<span class="cavelv">${CAVE_N[G.caveLv||0]}洞天</span></div></div>
+  <header class="top"><div><div class="date num">${dateStr()}</div><div class="cave">${esc(G.cave)}<span class="cavelv">${CAVE_N[G.caveLv||0]}洞天</span><button class="cave-up" onclick="openRenovate()" aria-label="修葺洞天">${(G.caveLv||0)<3?'▲':'◆'}</button></div></div>
    <div class="ap" aria-label="互动点 ${G.ap}/3">${apDots(G.ap)}<span>互动</span></div>
    <button class="icon-btn" aria-label="菜单" onclick="openMenu()">卷</button></header>
   <section class="pcard gf-${p.gender}">
@@ -2823,7 +2800,7 @@ function renderMain(){document.body.className='cave-'+(G.caveLv||0);const p=G.p,
    <div class="minor"><button onclick="openBag('p')">乾坤囊</button><button onclick="openRoster()">师门表</button><button onclick="openMail()">信笺${G.mailBadge?'<i class="dot"></i>':''}</button></div></section>
   <section class="chron"><div class="sec-h"><h2>洞府纪事</h2><button class="link" onclick="openLog()">查看全部</button></div><ul>${G.log.slice(0,6).map(l=>`<li><time>${l.t}</time><span>${l.s}</span></li>`).join('')}</ul></section>`}
 function dCard(d){const tag=d.bday?'<span class="tag ok">生辰</span>':d.away>0?'<span class="tag">外出</span>':hpWord(d)?`<span class="tag warn">${hpWord(d)}</span>`:d.realm>=20?'<span class="tag ok">可出师</span>':'';
-  return `<button class="dcard gf-${d.gender}" onclick="openD(${d.id})">${tag}<div class="av">${d.name.slice(-1)}</div><div class="dn">${d.name}</div><div class="dr">${seniorTitle(d)} · ${d.age}岁</div><div class="dr">${REALMS[d.realm]}</div>
+  return `<button class="dcard gf-${d.gender}" onclick="openD(${d.id})">${tag}<div class="av">${d.name.slice(-1)}</div><div class="dn">${d.name}</div><div class="dr">${seniorTitle(d)} · ${d.age}岁${d.reborn?(d.reborn==='ds'?' · 夺舍':' · 转世'):''}</div><div class="dr">${REALMS[d.realm]}</div>
   <div class="mini"><span>心情</span><div class="bar s"><i style="width:${d.mood}%"></i></div></div><div class="mini"><span>好感</span><div class="bar s fav"><i style="width:${d.favor}%"></i></div></div></button>`}
 
 // ---------- 徒弟详情 ----------
@@ -2848,7 +2825,7 @@ function openD(id){const d=getD(id);if(!d)return;if(d.status!=='home')return ope
    <div class="blk"><h4>近来日程</h4><ul class="dlog">${d.log.slice(0,40).map(l=>`<li><time>${l.t}</time>${l.s}</li>`).join('')}</ul></div>`,
    btns:[{t:'逐出师门',cls:'red',fn:()=>expel(id)},...(d.realm>=20?[{t:'出师',cls:'jade',fn:()=>tryGraduate(id)}]:[]),{t:'召见',cls:'pri',dis:d.away>0,fn:()=>renderInteract(d)}]})}
 function renderInteract(d,line,delta,narr){const feast=!!G.feast;const greet=feast?'（举着酒杯走过来）师尊！':d.child&&d.age<6?'（在襁褓里冲你挥着小手）':d.favor<20?'（站在门边，没有走近）……{s}有何吩咐。':d.mood>80?'{s}找我？是有好玩的事吗！':'（行礼）{s}唤弟子何事？';
-  const acts=feast?[['chat','闲聊'],['toast','敬酒'],['care','关怀'],['gift','赠予']]:d.child&&d.age<6?[['chat','逗弄'],['care','抱抱'],['gift','赠予']]:[['chat','闲聊'],['spur','督促'],['care','关怀'],['cool','冷落'],['gift','赠予'],['scold','辱骂','danger'],['abuse','责罚','danger']];const ap=apLeft();
+  const acts=feast?[['chat','闲聊'],['toast','敬酒'],['care','关怀'],['gift','赠予']]:d.child&&d.age<6?[['chat','逗弄'],['care','抱抱'],['gift','赠予']]:[['chat','闲聊'],['spur','督促'],['care','关怀'],['cool','冷落'],['gift','赠予'],['scold','辱骂','danger'],['abuse','责罚','danger']];if(!feast&&(d.sick||injD(d)))acts.unshift(['tend','照料']);const ap=apLeft();
   modal({title:`${feast?'家宴':'召见'} · ${d.name}`,html:`<div class="talk"><div class="av lg gf-${d.gender}">${d.name.slice(-1)}</div><div class="bubble"><span class="who">${d.name}</span>${narr?`<span class="hint" style="display:block;margin-bottom:4px">${narr}</span>`:''}${line!=null?line:(narr?'':fmt(greet,d))}</div></div>
    <div class="delta">${delta||''}</div>
    <div class="ap" style="justify-content:center"><span>剩余${feast?'宴席':''}互动 ${ap}</span></div>
@@ -2860,18 +2837,18 @@ function openBag(tab='p'){const eq=[0,1,2].map(i=>{const k=G.p.eq[i];if(!k)retur
   const list=G.bag.filter(x=>x.k[0]===tab).sort((a,b)=>a.k.localeCompare(b.k));const fx_=pFx();
   const bl=G.bagLv||0,cap=PCAP[bl];
   modal({title:'乾坤囊',html:`<div class="item"><div class="info"><div class="nm">${gd(bl)}乾坤囊 · ${bagTotal(G.bag)}/${capStr(cap)}</div><div class="ds">装满后新得的东西会被挤碎（佩戴中的法器不占位）。</div></div>${bl<3?`<button class="btn sm" ${G.p.jade<BAG_COST[bl+1]?'disabled':''} onclick="upBag()">升${GR[bl+1]}品 ${BAG_COST[bl+1]}</button>`:''}</div><div class="tabs"><button class="${tab==='p'?'on':''}" onclick="openBag('p')">丹药</button><button class="${tab==='f'?'on':''}" onclick="openBag('f')">法器</button></div>
-   ${tab==='f'?`<div class="blk"><h4>随身佩戴（${G.p.eq.length}/3）</h4><div class="eqs">${eq}</div><p class="fdesc" style="margin-top:6px">${Object.keys(FX_LABEL).filter(k=>fx_[k]).map(k=>`${FX_LABEL[k]}+${Math.round(fx_[k]*100)}%`).join(' · ')||'尚未佩戴法器'}</p></div>`:`<p class="hint">${G.p.brk?`破境丹药力：下次突破 +${Math.round(G.p.brk*100)}%。`:''}想送给徒弟，请在召见时选「赠予」。卖出可得半价灵玉。</p>`}
-   <div class="items">${list.length?list.map(x=>{const I=itemInfo(x.k);return `<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name} <span class="ct">×${x.n}</span></div><div class="ds">${I.desc}</div></div>${tab==='p'?`<button class="btn sm" onclick="usePill('${x.k}')">服用</button>`:I.use?`<button class="btn sm" onclick="useSsj('${x.k}')">使用</button>`:`<button class="btn sm" onclick="equip('${x.k}')">佩戴</button>`}<button class="btn sm" onclick="sellItem('${x.k}')">卖${Math.round(I.price*.3)}</button></div>`}).join(''):'<p class="hint">空空如也。</p>'}</div>`})}
+   ${tab==='f'?`<div class="blk"><h4>随身佩戴（${G.p.eq.length}/3）</h4><div class="eqs">${eq}</div><p class="fdesc" style="margin-top:6px">${Object.keys(FX_LABEL).filter(k=>fx_[k]).map(k=>`${FX_LABEL[k]}+${Math.round(fx_[k]*100)}%`).join(' · ')||'尚未佩戴法器'}</p></div>`:`<p class="hint">${G.p.brk?`破境丹药力：下次突破 +${Math.round(G.p.brk*100)}%。`:''}想送给徒弟，请在召见时选「赠予」。要卖东西请去「逛藏宝阁」。</p>`}
+   <div class="items">${list.length?list.map(x=>{const I=itemInfo(x.k);return `<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name} <span class="ct">×${x.n}</span></div><div class="ds">${I.desc}</div></div>${tab==='p'?`<button class="btn sm" onclick="usePill('${x.k}')">服用</button>`:I.use?`<button class="btn sm" onclick="useSsj('${x.k}')">使用</button>`:`<button class="btn sm" onclick="equip('${x.k}')">佩戴</button>`}${tab==='p'&&x.n>1&&I.kind!=='yh'?`<button class="btn sm" onclick="useAll('${x.k}')">全部</button>`:''}</div>`}).join(''):'<p class="hint">空空如也。</p>'}</div>`})}
 
 // ---------- 行事 ----------
 function openActs(){const ds=presentDs();let html='<div class="acts">';
   if(G.tut===1){html+=actBtn('clean')+'</div><p class="hint">新官上任第一天，先把洞府打扫干净吧。</p>';return modal({title:'今日行事',html})}
   G.events.forEach((e,i)=>{html+=`<button class="act special" onclick="runEvent(${i})"><b style="color:var(--cinnabar)">${e.label}</b><em>宗门大事</em><p>截止 ${e.untilStr}。参加不耗时间。</p></button>`});
-  const hurt=injD(G.p);(hurt?['heal','teach','market','alch','task','explore','renovate','idle']:['cult','teach','market','alch','task','explore','seclude','renovate','idle']).forEach(k=>{let dis=false,note='';if(k==='teach'&&!ds.length){dis=true;note='（门下无人）'}html+=actBtn(k,dis,note)});if(hurt)html+=`<p class="hint" style="color:var(--cinnabar)">你${sevD(G.p)?'身受重伤':'有伤在身'}（气血 ${Math.floor(hpOf(G.p))}/${hpMax(G.p)}），无法修炼与闭关。</p>`;
+  const hurt=injD(G.p);['idle','teach',hurt?null:'cult','market','alch','task','explore',hurt?'heal':'seclude'].filter(Boolean).forEach(k=>{let dis=false,note='';if(k==='teach'&&!ds.length){dis=true;note='（门下无人）'}html+=actBtn(k,dis,note)});if(hurt)html+=`<p class="hint" style="color:var(--cinnabar)">你${sevD(G.p)?'身受重伤':'有伤在身'}（气血 ${Math.floor(hpOf(G.p))}/${hpMax(G.p)}），无法修炼与闭关。</p>`;
   html+='</div>';modal({title:'今日行事',html})}
 function actBtn(k,dis,note=''){const A=ACTS[k];const fn=k==='renovate'?'openRenovate()':k==='alch'?'openAlch()':k==='explore'?'openExplore()':k==='task'?'openTasks()':k==='seclude'||k==='heal'?`openDays('${k}')`:`doAct('${k}')`;return `<button class="act" ${dis?'disabled':''} onclick="${fn}"><b>${A.n}</b><em>${A.days?A.days+'日':'自选'}</em><p>${A.desc}${note}</p></button>`}
 let DAYS_SEL=30;
-function missedFest(days){const out=[];let t={...G.date};const so=G.secret&&!G.secret.opened?G.secret.open:-1;for(let i=0;i<days;i++){t=addDays(t,1);const f=FEST_DATES.find(x=>x[0]===t.m&&x[1]===t.d);if(f)out.push(`${t.y}年${t.m}月${t.d}日 ${f[2]}`);if(dn(t)===so)out.push(`${t.y}年${t.m}月${t.d}日 秘境「${SECRET[G.secret.id].n}」开启`)}const back=dn(t);G.events.forEach(e=>{if(e.until<back)out.unshift(`${e.label}（${e.untilStr}截止，正在进行）`)});return out}
+function missedFest(days){const out=[];let t={...G.date};const so=G.secret&&!G.secret.opened?G.secret.open:-1;for(let i=0;i<days;i++){t=addDays(t,1);const f=FEST_DATES.find(x=>x[0]===t.m&&x[1]===t.d);if(f)out.push(`${t.y}年${t.m}月${t.d}日 ${f[2]}`);G.ds.forEach(x=>{if(['home','grad'].includes(x.status)&&x.bm===t.m&&x.bd===t.d)out.push(`${t.y}年${t.m}月${t.d}日 ${x.name}生辰`)});if(dn(t)===so)out.push(`${t.y}年${t.m}月${t.d}日 秘境「${SECRET[G.secret.id].n}」开启`)}const back=dn(t);G.events.forEach(e=>{if(e.until<back)out.unshift(`${e.label}（${e.untilStr}截止，正在进行）`)});return out}
 function openDays(kind){const heal=kind==='heal';const lo=heal?5:30,hi=heal?100:300;const d=clamp(DAYS_SEL,lo,hi);const miss=missedFest(d);
   modal({title:heal?'静养':'闭关',html:`<p class="hint">${heal?'有伤在身无法修炼。静养期间气血恢复更快，也能平复动心。':'闭关期间修为大涨、动心平复，但无法管教徒弟，宗门大事也会错过。'}</p>
    <div class="goals">${(heal?[5,15,30]:[30,100,300]).map(n=>`<button class="${d===n?'on':''}" onclick="DAYS_SEL=${n};openDays('${kind}')">${n}天</button>`).join('')}</div>
@@ -2883,15 +2860,13 @@ let ALCH={kind:'jq',g:0};
 function alchDays(kind,g){const P=PILLS[kind];return P.only!=null?P.days:Math.round(P.days*(1+.5*g))}
 function openAlch(){const r=G.p.realm,maxG=r>=35?3:r>=25?2:r>=15?1:0;const P=PILLS[ALCH.kind];if(P.only!=null)ALCH.g=P.only;else ALCH.g=Math.min(ALCH.g,maxG);const help=homeDs().reduce((s,d)=>s+(fx(d).alchHelp||0),0);
   const k=`p:${ALCH.kind}:${ALCH.g}`,I=itemInfo(k),cost=Math.round(I.price*.8),locked=P.only===3&&r<25,p=clamp(.65+(pFx().alch||0)+help-ALCH.g*.12,.1,.95),days=alchDays(ALCH.kind,ALCH.g);ALCH.p=p;const miss=missedFest(days);
-  modal({title:'开炉炼丹',html:`<div class="blk"><h4>丹方</h4><div class="goals">${Object.entries(PILLS).map(([kk,Q])=>`<button class="${ALCH.kind===kk?'on':''}" onclick="ALCH.kind='${kk}';openAlch()">${Q.n}</button>`).join('')}</div></div>
+  modal({title:'开炉炼丹',html:`<div class="blk"><h4>丹方</h4><div class="goals">${Object.entries(PILLS).filter(([kk,Q])=>!Q.hidden).map(([kk,Q])=>`<button class="${ALCH.kind===kk?'on':''}" onclick="ALCH.kind='${kk}';openAlch()">${Q.n}</button>`).join('')}</div></div>
    ${P.only==null?`<div class="blk"><h4>品阶</h4><div class="goals">${GR.map((g,i)=>`<button class="${ALCH.g===i?'on':''}" ${i>maxG?'disabled':''} onclick="ALCH.g=${i};openAlch()">${g}品${i>maxG?'（境界不足）':''}</button>`).join('')}</div></div>`:''}
    <div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name}</div><div class="ds">${I.desc}</div></div></div>
    <dl class="kv"><dt>耗费</dt><dd>灵玉 ${cost}（现有 ${G.p.jade}）</dd><dt>成丹率</dt><dd>${Math.round(p*100)}%${help?'（有徒弟帮忙看火）':''}</dd><dt>产出</dt><dd>${ALCH.kind==='xs'?'1 枚':'2～4 枚'}</dd><dt>耗时</dt><dd>${days} 日</dd></dl>
    ${locked?'<p class="hint" style="color:var(--cinnabar)">洗髓丹需化神期以上才能炼制。</p>':''}${miss.length?`<p class="hint">炼丹期间会错过：${miss.join('、')}</p>`:''}`,
    btns:[{t:'返回',fn:openActs},{t:'开炉',cls:'pri',dis:G.p.jade<cost||locked,fn:()=>{G.p.jade-=cost;ACTS.alch.days=days;doAct('alch',{k,p,days})}}]})}
 function refreshShop(){const r=G.p.realm;G.shop=[];for(let i=0;i<6;i++){const k=randPill(rollGrade(r));G.shop.push({k,n:ri(1,4)})}G.shop.push({k:'p:yh:0',n:ri(0,2)});G.shop.push({k:'p:hc:'+rollGrade(r),n:ri(0,2)});if(chance(.12))G.shop.push({k:'f:ssj',n:1});for(let i=0;i<2;i++)G.shop.push({k:randFaqi(rollGrade(r)),n:1})}
-function openShop(){modal({title:'宗门坊市',html:`<p class="hint">灵玉 ${G.p.jade}。货品每月初更换。</p><div class="items">${G.shop.map((x,i)=>{const I=itemInfo(x.k);return `<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name}</div><div class="ds">${I.desc}</div></div><span class="ct">余${x.n}</span><button class="btn sm" ${x.n<=0||G.p.jade<I.price?'disabled':''} onclick="buy(${i})">${I.price}灵玉</button></div>`}).join('')}</div>`,btns:[{t:'离开坊市',cls:'pri',fn:closeModal}]})}
-function buy(i){const x=G.shop[i],I=itemInfo(x.k);if(G.p.jade<I.price||x.n<=0)return;G.p.jade-=I.price;x.n--;addItem(G.bag,x.k);toast(`买下${I.name}`);save();openShop()}
 
 // ---------- 宗门大事 ----------
 function runEvent(i){const e=G.events[i];if(!e)return;e.touched=true;({recruit:openRecruit,tourney:openTourney,newyear:openNewYear,qingming:openQingming,mid:openFeastPrep,auction:openAuction,secret:openSecret})[e.k](e)}
@@ -2969,7 +2944,7 @@ const ST_NAME={home:'在门',grad:'已出师',dead:'已陨落',nemesis:'叛离',
 function openRoster(tab='home'){const groups={home:d=>d.status==='home',grad:d=>d.status==='grad',gone:d=>!['home','grad'].includes(d.status)};const list=G.ds.filter(groups[tab]).sort((a,b)=>a.seq-b.seq);
   modal({title:'师门表',html:`<div class="tabs"><button class="${tab==='home'?'on':''}" onclick="openRoster('home')">在门</button><button class="${tab==='grad'?'on':''}" onclick="openRoster('grad')">出师</button><button class="${tab==='gone'?'on':''}" onclick="openRoster('gone')">离散</button></div>
    <p class="hint">共收徒 ${G.stats.recruited} 人，出师 ${G.stats.grads} 人。按入门先后排序。</p>
-   <div class="items">${list.length?list.map(d=>`<button class="roster-row gf-${d.gender}" onclick="openAlum(${d.id})"><div class="av">${d.name.slice(-1)}</div><div><b>${d.name}</b><small>${d.seq?seniorTitle(d)+' · ':''}${REALMS[d.realm]}${d.status==='grad'?' · '+CAREERS[d.career].n:''}${d.child?' · 你的孩子':''}</small></div><span class="st-tag">${ST_NAME[d.status]}</span></button>`).join(''):'<p class="hint">暂无。</p>'}</div>`})}
+   <div class="items">${list.length?list.map(d=>`<button class="roster-row gf-${d.gender}" onclick="openAlum(${d.id})"><div class="av">${d.name.slice(-1)}</div><div><b>${d.name}</b><small>${d.seq?seniorTitle(d)+' · ':''}${REALMS[d.realm]}${d.status==='grad'?' · '+CAREERS[d.career].n:''}${d.child?' · 你的孩子':''}</small></div><span class="st-tag">${d.reborn?(d.reborn==='ds'?'夺舍·':'转世·'):''}${ST_NAME[d.status]}</span></button>`).join(''):'<p class="hint">暂无。</p>'}</div>`})}
 function openAlum(id){const d=getD(id);if(d.status==='home')return openD(id);
   modal({title:d.name,html:`<div class="dhead gf-${d.gender}"><div class="av lg">${d.name.slice(-1)}</div><div><div class="dn">${d.name} <small>${GN[d.gender]} · ${d.age}岁</small></div><div>${d.seq?seniorTitle(d)+' · ':''}${REALMS[d.realm]}</div><div class="hint">${d.child?'你的孩子 · ':''}${ST_NAME[d.status]}${d.status==='grad'?' · 现为'+CAREERS[d.career].n:''}${d.endDate?' · '+d.endDate:''}</div></div></div>
    ${d.status==='grad'?`<div class="barrow"><span>好感</span><div class="bar fav"><i style="width:${d.favor}%"></i></div><span>${Math.round(d.favor)}</span></div>${d.age>=18?`<div class="barrow"><span style="color:var(--cinnabar)">心动</span><div class="bar hb"><i style="width:${d.crush||0}%"></i></div><span>${Math.round(d.crush||0)}</span></div>`:''}`:''}
