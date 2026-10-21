@@ -5232,7 +5232,7 @@ function exploreResult(days){const r=G.p.realm,luck=pFx().luck||0;const lines=[]
     else if(ev==='cand'){cands++;G.queue.push({k:'walkin',cand:genDisciple(),src:'explore'});lines.push(pick(EXP_TXT.cand))}}
   log(`下山游历${days}日归来。`);
   return{k:'msg',title:`游历见闻 · ${days}日`,html:`<ul class="dlog" style="max-height:none;font-size:14px">${lines.map(l=>`<li>${l}</li>`).join('')}</ul>`}}
-function playerBreak(){const r=G.p.realm,[base,name]=BREAK[r];const p=clamp(base+G.p.brk,0,.98);const from=startTurn();simDay();G.p.brk=0;
+function playerBreak(){const r=G.p.realm,[base,name]=BREAK[r];const p=clamp(base+G.p.brk,0,.98)*(window.guiltMul?guiltMul():1);const from=startTurn();simDay();G.p.brk=0;
   if(chance(p)){if(r===44){setEnding('ascend');return}G.p.realm++;G.p.xp=0;G.p.kpi+=3;log(`冲击${name}成功，晋入${REALMS[G.p.realm]}！`);G.queue.push({k:'msg',title:'突破成功',html:`<p class="big-c">${REALMS[G.p.realm]}</p><p class="prose">天地灵气倒灌入体，你成功晋入${REALMS[G.p.realm]}。宗门KPI +3。</p>`})}
   else{G.p.realm--;G.p.xp=0;hurtP(20);if(G.over)return;log(`冲击${name}失败，修为跌落。`);G.queue.push({k:'msg',title:'突破失败',html:`<p class="prose">灵力在丹田中横冲直撞，你一口血喷出，修为跌落至${REALMS[G.p.realm]}。</p>`})}
   endTurn(from)}
@@ -5584,7 +5584,7 @@ EV.pregD=()=>{const P=G.preg;if(!P)return nextEvent();const d=getD(P.carrier);if
   evModal('身孕',`<p class="prose">${d.name}找上门来，脸色苍白，手一直按在小腹上：<br>“师尊……弟子有了身孕。是您的。”</p>`,[
   opt('负责',()=>{P.kept=true;addHeart(90,d);d.favor+=10;d.demon-=10;clampD(d);logD(d,'师尊说会负责。');result('{d}愣了一下，然后哭了出来。',d)},false,'red'),
   opt('不负责',()=>{G.preg=null;d.favor=0;d.love=0;d.demon=100;hurtD(d,70);clampD(d);logD(d,'独自去了药堂，从此再没笑过。');let t='{d}看了你很久，转身走了。三日后，{ta}独自去了药堂。';
-    if(PUBLIC_TYPES.includes(d.mbti)&&chance(.5)){G.p.kpi-=150;G.p.rank=Math.max(0,G.p.rank-1);t+=`<br><br>没过几天，这件事传遍了整个玄天宗。长老会震怒：你被降为${RANKS[G.p.rank]}，宗门KPI -150。`;log('丑闻传遍宗门，你被降职。')}result(t,d)})])};
+    if(PUBLIC_TYPES.includes(d.mbti)&&chance(.5)){G.p.kpi-=150;if(G.p.rank>=8){t+=`<br><br>没过几天，这件事传遍了整个玄天宗。长老会震怒，却拿你这个宗主无可奈何，宗门KPI -150。`;log('丑闻传遍宗门。')}else{G.p.rank=Math.max(0,G.p.rank-1);t+=`<br><br>没过几天，这件事传遍了整个玄天宗。长老会震怒：你被降为${RANKS[G.p.rank]}，宗门KPI -150。`;log('丑闻传遍宗门，你被降职。')}}result(t,d)})])};
 EV.birth=()=>{const P=G.preg;if(!P)return nextEvent();const mate=getD(P.mate);const car=P.carrier==='p'?null:getD(P.carrier);G.preg=null;
   if(chance(.08)){if(!car){setEnding('birth',mate);return}killD(car,'难产而亡。')}
   if(car&&car.status==='dead'){}else if(P.carrier==='p'){if(mate)addHeart(80,mate)}else addHeart(80,car);if(G.over)return;
@@ -6007,10 +6007,10 @@ function showGuide(){modal({title:`${G.cave} · 洞府指南`,html:`<div class="
   <p><b>宗门KPI</b>：年末考核。达标升职，太差降职，降无可降就被逐出宗门。</p>
   <p class="hint">徒弟的性格、爱恋与心魔看不见。多闲聊，多看日程，从他们的话里听出端倪。</p></div>`,btns:[{t:'知道了',cls:'pri',fn:closeModal}]})}
 
-function renderMain(){document.body.className='cave-'+(G.caveLv||0);const p=G.p,need=needP(p.realm);const tgt=rankTarget(p.rank)*(G.date.y===100?.5:1);const ht=heartTotal();const nreq=p.rank<8?RANK_REQ[p.rank+1]:0;
+function renderMain(){document.body.className='cave-'+(G.caveLv||0);const p=G.p,need=needP(p.realm);const tgt=p.rank>=8&&window.okrExp?okrExp():rankTarget(p.rank)*(G.date.y===100?.5:1);const ht=heartTotal();const nreq=p.rank<8?RANK_REQ[p.rank+1]:0;
   const evs=G.events.map((e,i)=>`<button class="event" onclick="runEvent(${i})"><span class="seal-s">宗</span><span><b>宗门大事 · ${e.label}</b><small>截止 ${e.untilStr}</small></span><span aria-hidden="true">›</span></button>`).join('');
   const ds=homeDs();const mx=slotsMax();const nSlots=Math.max(ds.length,mx);const cells=[];for(let i=0;i<Math.max(3,Math.ceil(Math.max(nSlots,1)/3)*3);i++){if(ds[i])cells.push(dCard(ds[i]));else if(i<mx)cells.push(`<div class="dcard empty"><div class="av">空</div><div class="dn">虚位以待</div><div class="dr">${G.tut<3?'收徒大会':'六月收徒 · 游历有缘'}</div></div>`);else{const need=SLOTS.findIndex(s=>s>i);cells.push(`<div class="dcard empty locked"><div class="av">锁</div><div class="dn">未解锁</div><div class="dr">${need>=0?'升至'+RANKS[need]:''}</div></div>`)}}
-  const bp=canBreak()?Math.round(clamp(BREAK[p.realm][0]+p.brk,0,.98)*100):0;
+  const bp=canBreak()?Math.round(clamp(BREAK[p.realm][0]+p.brk,0,.98)*(window.guiltMul?guiltMul():1)*100):0;
   $('#app').innerHTML=`
   <header class="top"><div><div class="date num">${dateStr()}</div><div class="cave">${esc(G.cave)}<span class="cavelv">${CAVE_N[G.caveLv||0]}洞天</span><button class="cave-up" onclick="openRenovate()" aria-label="修葺洞天">${(G.caveLv||0)<3?'▲':'◆'}</button></div></div>
    <div class="ap" aria-label="互动点 ${G.ap}/3">${apDots(G.ap)}<span>互动</span></div>
@@ -6917,5 +6917,185 @@ const _interact20=interact;interact=function(id,act){LAST_ACT20=(act==='chat'||a
 <script>
 // 生离死别中不聊闲话题
 const _pickTopic20=pickTopic;pickTopic=function(d,sib){if(d&&d.grief&&chance(.85))return null;return _pickTopic20(d,sib)};
+</script>
+<style>
+.buff-ic{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:0 7px;height:22px;border:1px solid var(--line);border-radius:999px;background:transparent;font-size:13px;line-height:1;vertical-align:middle;cursor:pointer;color:var(--ink2,var(--ink))}
+.buff-ic b{font-size:11px;font-family:inherit;font-weight:600}
+.buff-ic.anger{border-color:var(--cinnabar);color:var(--cinnabar)}
+.okr-line{margin-top:6px}
+.okr-line .link{font-size:12px;margin-left:4px}
+</style>
+<script>
+// ================= v21：宗主 OKR / 愧疚 / 转世夺舍重做 =================
+// ---------- 宗主 OKR ----------
+const isLeader=()=>!!(G&&G.p&&G.p.rank>=8);
+const OKR_BOOST=.3;// 宗主任上，正向 OKR 收益额外 +30%
+const OKR_TIER=['不合格','合格','良好','优秀','超凡'];
+const OKR_RARE=['f:zqj','p:fs:3','p:dh:3','p:hh:3','p:xs:3'],OKR_RARE_W={'f:zqj':3,'p:fs:3':3,'p:dh:3':2,'p:hh:3':1,'p:xs:3':3};
+function okrExp(){if(G.okrExp==null)G.okrExp=2000;return G.okrExp}
+function okrLines(){const e=okrExp();return[e*.25,e*.5,e*.75,e].map(x=>Math.round(x))}
+function okrTierOf(k){const L=okrLines();return k>=L[3]?4:k>=L[2]?3:k>=L[1]?2:k>=L[0]?1:0}
+function okrSync(){if(!G||G.over)return;if(G.okrSnap==null){G.okrSnap=G.p.kpi;return}const dl=G.p.kpi-G.okrSnap;if(dl>0&&isLeader())G.p.kpi+=Math.round(dl*OKR_BOOST);G.okrSnap=G.p.kpi}
+function pillMin(g){for(let i=0;i<30;i++){const k=randPill(Math.min(3,Math.max(g,rollGrade(G.p.realm))));if(itemInfo(k).g>=g)return k}return `p:jq:${g}`}
+function faqiMin(g){return randFaqi(Math.min(3,Math.max(g,rollGrade(G.p.realm))))}
+function leaderReview(y){const p=G.p;const e=okrExp(),L=okrLines(),k=p.kpi,t=okrTierOf(k);const rm=clamp(1+(e/2000-1)*.5,.75,3);
+  let html=`<p class="prose">仙历${y}年，${SECT()}年会。身为宗主，你本年的宗门OKR为 <b>${k}</b>。</p><p class="hint">合格 ${L[0]} · 良好 ${L[1]} · 优秀 ${L[2]} · 超凡 ${L[3]}</p><p class="big-c">${OKR_TIER[t]}</p>`;
+  const got=[];
+  if(t===0)html+=`<p class="prose">长老们面面相觑，没人举杯。散会时，堂下的议论声已经压不住了。</p>`;
+  else if(t===1)html+=`<p class="prose">不好不坏。长老们点点头，没人多说什么。</p><p class="hint">合格不另行封赏。</p>`;
+  else{const c=t===2?{a:1000,b:1500,pn:ri(2,4),pg:0,fn:ri(1,2),fg:0,s:'宗门上下颇为满意，库房拨下了年赏。'}:t===3?{a:1500,b:2500,pn:ri(3,5),pg:1,fn:ri(1,2),fg:1,s:'各峰交口称赞，库房开了内库。'}:{a:3000,b:5000,pn:ri(4,6),pg:2,fn:ri(2,3),fg:2,s:'满堂喝彩，各峰长老争相敬酒。宗门把压箱底的东西都搬了出来。'};
+    const jade=Math.round(ri(c.a,c.b)*rm/10)*10;p.jade+=jade;const extra=rm>=1.2?1:0;
+    for(let i=0;i<c.pn+extra;i++){const kk=pillMin(c.pg);addItem(G.bag,kk);got.push(itemInfo(kk).name)}
+    for(let i=0;i<c.fn+(rm>=1.5?1:0);i++){const kk=faqiMin(c.fg);addItem(G.bag,kk);got.push(itemInfo(kk).name)}
+    if(t===4&&chance(.25)){const kk=wpick(OKR_RARE,x=>OKR_RARE_W[x]);addItem(G.bag,kk);got.push(`<b style="color:var(--cinnabar)">${itemInfo(kk).name}</b>`);unlock('okrrare')}
+    html+=`<p class="prose">${c.s}</p><p class="hint">灵玉 +${jade}<br>${got.join('、')}</p>`}
+  let ne=e;if(t>=2)ne=Math.round(e*1.2);else if(t===0)ne=Math.max(1000,Math.round(e*.9));G.okrExp=ne;
+  html+=ne>e?`<p class="hint">干得好，大家就盼着你明年干得更好：明年的期望升至 <b>${ne}</b>（+20%），合格线 ${Math.round(ne*.25)}。</p>`:ne<e?`<p class="hint">众人对你的期望降低了：明年的期望降至 <b>${ne}</b>（-10%）。</p>`:`<p class="hint">明年的期望维持 <b>${ne}</b>。</p>`;
+  if(t>=3&&(G.anger||0)>0){G.anger--;html+=`<p class="prose">宗门里的不满平息了一些。（宗门的不满 -1，余 ${G.anger} 层）</p>`}
+  G.okrHist=(G.okrHist||[]).concat(t).slice(-10);const h=G.okrHist;
+  if(t===1)unlock('okr1');if(t===4)unlock('okr4');if(h.length>=3&&h.slice(-3).every(x=>x===4))unlock('okr4x3');if(h.length>=5&&h.slice(-5).every(x=>x===1))unlock('okrfish');if(h.length>=5&&h.slice(-5).every(x=>x===2))unlock('okrmid');if(ne>=5000)unlock('okrexp');
+  p.kpi=0;G.okrSnap=0;G.queue.push({k:'msg',title:'宗门年会',html});log(`仙历${y}年宗门年会：OKR ${k}（${OKR_TIER[t]}）。`);
+  if(t===0)G.queue.push({k:'okrDiss',exp:e});
+  G.ds.filter(d=>d.status==='nemesis'||d.status==='demon').forEach(d=>{if(dPower(d)>pPower()*.9&&chance(.4))G.queue.push({k:'revenge',id:d.id})});
+  G.ds.filter(d=>d.status==='grad'&&d.obsessed).forEach(d=>{if(chance(.35))G.queue.push({k:'dark',id:d.id})})}
+const _yr21=yearReview;
+yearReview=function(y){if(isLeader()){okrSync();return leaderReview(y)}const r=_yr21(y);if(isLeader()){okrExp();G.okrSnap=G.p.kpi}return r};
+const _onMonth21=onMonth;
+onMonth=function(){okrSync();const jan=G.date.m===1;_onMonth21();if(!G||G.over)return;if(jan)G.okrSnap=G.p.kpi;else okrSync();
+  G.ds.forEach(d=>{if(d.status==='dead'&&!d.rbDone&&!d.rebornSched&&(d.memory||0)>=100)checkReborn(d)})};
+const _endTurn21=endTurn;
+endTurn=function(from){try{okrSync()}catch(e){}return _endTurn21(from)};
+// 宗门议论
+function takeCheap(list,n){const s=[...list].sort((a,b)=>itemInfo(a.k).price-itemInfo(b.k).price);for(const x of s){while(n>0&&removeItem(G.bag,x.k))n--;if(n<=0)break}}
+function addAnger(){G.anger=(G.anger||0)+1;unlock('okrdiss');log(`宗门的不满又重了一层（${G.anger}/5）。`);
+  if(G.anger>=5){setEnding('uprising');return}
+  result(`议论声没有停，反而越来越大。有人开始在背后串联了。<br><br>【宗门的不满】${G.anger}/5${G.anger>=4?'<br><b style="color:var(--cinnabar)">再这样下去，怕是要出事。</b>':''}<br><span class="hint">某一年OKR达到优秀及以上，可自动消除一层。</span>`)}
+EV.okrDiss=e=>{const ex=e.exp||okrExp();const cj=Math.round(ex*.6/10)*10,NP=6,NF=2;
+  const pills=G.bag.filter(x=>x.k[0]==='p'&&itemInfo(x.k).g>=1&&!(PILLS[x.k.split(':')[1]]||{}).hidden),np=pills.reduce((s,x)=>s+x.n,0);
+  const fq=G.bag.filter(x=>x.k[0]==='f'&&itemInfo(x.k).g>=1),nf=fq.reduce((s,x)=>s+x.n,0);
+  const none=G.p.jade<cj&&np<NP&&nf<NF;
+  const pay=(fn,msg)=>{fn();log('拿出好处，平息了宗门里的议论。');unlock('okrcalm');result(msg)};
+  evModal('宗门议论',`<p class="prose">年会散后，议论声并没有停。<br>“宗主今年……是不是太松懈了？”“换个人来，未必比这差。”<br>流言在各峰之间传来传去，越传越难听。</p><p class="hint">拿出些好处，可以堵住众人的嘴；拿不出或不愿拿，就会积下一层【宗门的不满】（当前 ${G.anger||0}/5，满 5 层宗门生变）。</p>`,[
+    opt(`散财：灵玉 ${cj}（现有 ${G.p.jade}）`,()=>pay(()=>{G.p.jade-=cj},'你让库房给各峰都分了一笔灵玉。拿人手短，议论声渐渐小了。'),G.p.jade<cj),
+    opt(`献丹：玄品及以上丹药 ${NP} 枚（现有 ${np}）`,()=>pay(()=>takeCheap(pills,NP),'你把一匣丹药分赠各峰长老。第二天，再没人提起年会的事。'),np<NP),
+    opt(`献宝：玄品及以上法器 ${NF} 件（现有 ${nf}）`,()=>pay(()=>takeCheap(fq,NF),'两件法器送进了长老会。众人把玩了半天，嘴上便客气了许多。'),nf<NF),
+    opt(none?'……拿不出来':'置之不理',()=>addAnger(),false,'red')])};
+function openAnger(){const n=G.anger||0;modal({title:'宗门的不满',html:`<p class="prose">宗主不是坐稳了就万事大吉的位置。年会上OKR不合格又拿不出好处安抚众人，宗门里的不满就会积下一层。</p>
+  <p class="big-c">${n} / 5</p><p class="hint">· 满 5 层，宗门生变（结局「苍天已死」，回魂芝也救不回）。<br>· 某一年OKR达到<b>优秀</b>及以上，自动消除一层。<br>· 不合格时，可以拿灵玉、丹药或法器平息议论，避免新增。</p>`,btns:[{t:'知道了',cls:'pri',fn:closeModal}]})}
+function openOkr(){const L=okrLines();modal({title:'宗门OKR',html:`<p class="prose">当上宗主后，再没人能把你撸下来了。可宗门的「目标与关键成果」，年年都要交卷。</p>
+  <div class="blk"><h4>今年的期望：${okrExp()}</h4><p class="hint">合格 ${L[0]}：无额外封赏<br>良好 ${L[1]}：灵玉 1000～1500、丹药若干、法器若干<br>优秀 ${L[2]}：灵玉 1500～2500、玄品及以上丹药与法器<br>超凡 ${L[3]}：灵玉 3000～5000、地品及以上丹药与法器，偶有稀世奇珍</p></div>
+  <div class="blk"><h4>规矩</h4><p class="hint">· 达到良好及以上，明年期望 +20%（可累计），封赏也会随之略增。<br>· 不合格，明年期望 -10%，并引发宗门议论；拿不出好处平息，就会积下【宗门的不满】。<br>· 优秀及以上，自动消除一层宗门的不满。<br>· 宗主任上，所有OKR收益额外 +30%。<br>干得太好，明年只会更累。摸鱼才是真。</p></div>`,btns:[{t:'知道了',cls:'pri',fn:closeModal}]})}
+// KPI → OKR（宗主任上，界面里的文字一律替换）
+(function(){const fix=n=>{if(n.nodeValue&&n.nodeValue.includes('KPI'))n.nodeValue=n.nodeValue.replace(/KPI/g,'OKR')};
+  const walk=r=>{if(r.nodeType===3)return fix(r);if(r.nodeType!==1)return;const w=document.createTreeWalker(r,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode())fix(n)};
+  const mo=new MutationObserver(ms=>{try{if(!isLeader())return}catch(e){return}ms.forEach(m=>{if(m.type==='characterData')fix(m.target);else m.addedNodes.forEach(walk)})});
+  mo.observe(document.body,{childList:true,subtree:true,characterData:true});
+  const _render21=render;render=function(){const r=_render21.apply(this,arguments);try{if(isLeader())walk(document.body)}catch(e){}return r}})();
+// 宗主不再降职
+// ---------- 愧疚 ----------
+function guiltTotal(){return G?G.ds.reduce((s,d)=>s+(d.guilt||0),0):0}
+function guiltPen(){return Math.min(.9,guiltTotal()*.1)}
+function guiltMul(){return 1-guiltPen()}
+function guiltLayers(d){return 1+Math.floor((d.crush||0)/30)}
+function addGuilt(d,n){d.guilt=Math.max(0,(d.guilt||0)+n);if(n>0)log(`你对${d.name}心怀愧疚（+${n}，共 ${guiltTotal()} 层）。`);if(guiltTotal()>10&&!G.over)setEnding('shame')}
+const _pGain21=pGain;pGain=function(){return _pGain21()*guiltMul()};
+const _killD21=killD;
+killD=function(d,why){const was=d.status;_killD21(d,why);if(was==='dead'||d.status!=='dead'||G.over)return;d.rbDone=false;d.rebornSched=false;addGuilt(d,guiltLayers(d))};
+function openGuilt(){const ds=G.ds.filter(d=>(d.guilt||0)>0).sort((a,b)=>b.guilt-a.guilt);const t=guiltTotal(),pen=Math.round(guiltPen()*100);
+  modal({title:'愧疚',html:`<p class="prose">没能护住的人，一个一个压在心上。</p><p class="big-c">${t} 层</p>
+   <div class="blk"><h4>当前影响</h4><p class="hint">修炼效率 -${pen}%　突破成功率 -${pen}%（每层 -10%，至多 -90%）${t>=8?`<br><b style="color:var(--cinnabar)">超过 10 层，道心将彻底崩毁。</b>`:''}</p></div>
+   <div class="blk"><h4>来自</h4>${ds.length?`<ul class="dlog" style="max-height:none;font-size:14px">${ds.map(d=>`<li><b>${d.name}</b>：${d.guilt} 层${d.rebornSched?'（魂已远去）':''}</li>`).join('')}</ul>`:'<p class="hint">无</p>'}</div>
+   <p class="hint">· 徒弟陨落即生愧疚；你对其心动越深，愧疚越重。<br>· 清明为其祭扫可消解：普通祭扫 -1 层，焚引魂香 -2 层。<br>· 中元入梦，对应的愧疚 +1 层。<br>· 徒弟转世或夺舍归来，对其的愧疚随之消散。</p>`,btns:[{t:'知道了',cls:'pri',fn:closeModal}]})}
+// ---------- 主界面图标 ----------
+const _renderMain21=renderMain;
+renderMain=function(){_renderMain21();const pn=document.querySelector('.pcard .pname');if(pn){let h='';const g=guiltTotal();if(g>0)h+=`<button class="buff-ic guilt" onclick="openGuilt()" aria-label="愧疚 ${g} 层" title="愧疚">☁<b>${g}</b></button>`;if((G.anger||0)>0)h+=`<button class="buff-ic anger" onclick="openAnger()" aria-label="宗门的不满 ${G.anger} 层" title="宗门的不满">💢<b>${G.anger}</b></button>`;if(h)pn.insertAdjacentHTML('beforeend',h)}
+  if(isLeader()){const st=document.querySelector('.pcard .stats');if(st){const L=okrLines();st.insertAdjacentHTML('afterend',`<p class="hint okr-line">合格 ${L[0]} · 良好 ${L[1]} · 优秀 ${L[2]} · 超凡 ${L[3]}<button class="link" onclick="openOkr()">OKR说明</button></p>`)}}};
+// ---------- 转世 / 夺舍 ----------
+checkReborn=function(d){if(!d||d.status!=='dead'||d.rbDone||d.rebornSched||(d.memory||0)<100)return '';const ds=d.demon>=50;d.rebornSched=true;d.rbType=ds?'ds':'zs';d.rbYear=G.date.y;G.reborn=G.reborn||[];
+  G.reborn.push({id:d.id,due:ds?dn(G.date):dn({y:G.date.y+10,m:G.date.m,d:G.date.d}),type:d.rbType});
+  return ds?'<br><br>梦的尽头，你听见一声低笑，像是从很深很深的地底传上来：“师尊，等我。”<br>醒来时，屋里冷得出奇。':'<br><br>恍惚间，你好像听见有人在很远的地方，轻轻唤了一声“师尊”。那声音越走越远，像是踏上了一条很长很长的路。'};
+const _walkin21=EV.walkin;
+EV.walkin=e=>{if(e.src!=='reborn')return _walkin21(e);const d=getD(e.old);if(!d||d.status!=='dead'||d.rbDone)return nextEvent();
+  const ds=(d.rbType||(d.demon>=50?'ds':'zs'))==='ds';const age=ds?ri(12,28):(d.rbYear!=null?clamp(G.date.y-d.rbYear,10,17):14);d.rbAge=age;
+  const g0=d.guilt||0;d.guilt=0;d.rbDone=true;d.rebornSched=false;const free=freeSlots();const who=age>=18?'年轻人':'孩子';
+  const intro=ds?`一个${age}岁的${who}站在洞府外，眼神却老得可怕。${TA(d)}冲你笑了笑：“师尊，好久不见。”<br>那张脸你从没见过，可那是${d.name}的笑。一模一样。`:`一个${age}岁的${who}跪在洞府外。看见你的那一刻，${TA(d)}愣住了，脱口而出：“师尊……”<br>同样的名字，同样的眉眼——${d.name}。`;
+  evModal(ds?'夺舍归来':'转世归来',`<p class="prose">${intro}</p>${candCard({...d,age},-1,false)}<p class="hint">${ds?'夺舍：带着前世的全部记忆归来，心魔会持续滋长。':'转世：前世的一切都在，只是记忆还沉睡着。等好感满了，或许会想起来。'}${g0?`<br>压在你心上、对${d.name}的愧疚（${g0} 层），散了。`:''}<br>无论收不收，${TA(d)}都已经回到了这世上，清明与中元不会再见到${TA(d)}的魂魄。</p>`,
+   [{t:free>0?'收入门下':`门下已满（${slotsMax()}人）`,cls:'pri',dis:free<=0,fn:()=>{reviveD(d,ds?'ds':'zs');closeModal()}},opt('婉拒',()=>{logD(d,`${ds?'夺舍':'转世'}归来，师尊没有收。`);log(`婉拒了${ds?'夺舍':'转世'}归来的${d.name}。`);closeModal()})])};
+const _reviveD21=reviveD;
+reviveD=function(d,type){_reviveD21(d,type);d.age=d.rbAge||14;if(d.log&&d.log[0])d.log[0].s=String(d.log[0].s).replace('十四岁',d.age+'岁');d.rbDone=false;d.rbType=null;d.memory=0;d.goneShown=false;d.guilt=0;clampD(d)};
+// 中元
+const ZY_DS={
+INTJ:SP(`（{d}站在桃树下，影子却比往常浓了几分）“{s}，弟子已经找好了路。这一次，不必等轮回。”|“弟子算过了。等不了那么久，也不想等。{s}，很快。”|（{d}伸手想碰你的脸，指尖穿过去时笑了一下）“下次，就碰得到了。”`),
+INTP:SP(`“弟子研究了一下，魂魄其实可以不走那条路……{s}别问，问了您会拦我。”|（{d}在梦里摆弄着一盏魂灯，喃喃自语）“换一具身子而已，逻辑上没有问题。”|“{s}，如果有一天，有人用一张陌生的脸叫您师尊，请别把他赶出去。”`),
+ENTJ:SP(`“阎王簿子上写的什么，弟子不认。弟子要回来，就一定回得来。”|（{d}负手而立，周身阴气翻涌）“{s}，等着。弟子不会让您等太久。”|“这世上能叫弟子松手的东西，还没生出来。”`),
+ENTP:SP(`“{s}，弟子发现规矩里有个漏洞，能插队回来。您猜是什么？……不告诉您。”|（{d}笑嘻嘻地绕着你转了一圈）“换张脸您还认得出我吗？到时候可别装不认识。”|“轮回太慢了，弟子不排队。”`),
+INFJ:SP(`（{d}静静地看着你，眼底有你从未见过的执拗）“{s}，弟子知道这样不对。可弟子放不下。”|“弟子听见有人在哭。弟子想回去……用什么法子都行。”|“若有一日弟子换了模样站在您面前，求您……别怕弟子。”`),
+INFP:SP(`“{s}，弟子不想喝孟婆汤。一点都不想忘。”|（{d}攥着你的衣角，攥得指节发白）“弟子会回来的。哪怕……哪怕要借别人的身子。”|“那边好冷。弟子找到一个暖和的地方了，很快就能回去见您。”`),
+ENFJ:SP(`“大家还需要弟子，{s}也需要弟子。所以弟子不能走。”|（{d}握住你的手，掌心冰凉）“再等等，弟子马上就回去照顾大家。”|“弟子已经想好回去以后要做什么了。第一件事，就是给{s}泡茶。”`),
+ENFP:SP(`“{s}！弟子找到回去的捷径啦！就是……有点不太光彩，嘿嘿。”|（{d}在桃树下转着圈，笑声有点发飘）“下次见面，弟子可能长得不太一样哦！”|“说好了要一直陪着您的，弟子才不要食言。”`),
+ISTJ:SP(`“弟子答应过{s}的事还没做完。没做完的事，弟子不会放下。”|（{d}端端正正地行了一礼，像是告别，又像是约定）“弟子很快回来复命。”|“规矩说，死了就该走。弟子这一次……不守规矩了。”`),
+ISFJ:SP(`“{s}一个人怎么照顾得过来……弟子要回去。”|（{d}低着头，声音很轻，却很坚决）“弟子已经找到法子了。您别担心。”|“您的冬衣还没补好呢，弟子得回去补。”`),
+ESTJ:SP(`“弟子的位置，谁也不许占。弟子自己回去坐。”|（{d}拍了拍衣襟上并不存在的灰）“手续弟子已经办妥了，就差一具身子。”|“{s}，把弟子的屋子留着。别让别人住进去。”`),
+ESFJ:SP(`“弟子舍不得大家……弟子一定要回去，一定。”|（{d}抱住你，抱得很紧很紧）“这一次，弟子不松手了。”|“{s}，等弟子回去，咱们再吃一回团圆饭，好不好？”`),
+ISTP:SP(`（{d}一言不发地擦着一把并不存在的剑，许久才开口）“快好了。”|“门路找到了。{s}别管弟子是怎么回来的。”|“死这件事，弟子不服。”`),
+ISFP:SP(`（{d}在你掌心画了一朵小小的花）“等这朵花开了，弟子就回来了。”|“弟子不想变成一缕烟……弟子还想再看看{s}。”|“那具身子不太合适。不过没关系，弟子会慢慢习惯的。”`),
+ESTP:SP(`“命这东西，抢回来就是了。{s}，你等着看。”|（{d}咧嘴一笑，眼底却泛着幽光）“下回见，弟子可就是活蹦乱跳的了。”|“阴间那帮家伙，拦不住我。”`),
+ESFP:SP(`“{s}！弟子马上就能回去啦！到时候给您一个大惊喜！”|（{d}在你面前跳了一支舞，影子却越来越浓）“热闹的地方才适合弟子，那边太安静了。”|“弟子才不要做孤魂野鬼，弟子要回去和大家一起过年！”`)};
+const ZY_ZS={
+INTJ:SP(`“弟子决定入轮回了。不是放下，是换一条路回来。”|（{d}看着你，像要把你的样子刻进骨头里）“{s}，记住弟子。弟子会找回来的。”|“孟婆汤弟子会喝。但有些东西，喝不掉。”`),
+INTP:SP(`“弟子算过，轮回大约要十几年。{s}……别把弟子忘了。”|（{d}挠挠头，罕见地有些局促）“下辈子弟子可能不记得功法了，您得重新教。”|“记忆会散。但弟子赌，有些东西不会。”`),
+ENTJ:SP(`“弟子去去就回。下一世，弟子还要拜在您门下。”|（{d}郑重地向你一揖到底）“{s}，把弟子的位置留着。”|“轮回又如何。弟子认定的事，不会变。”`),
+ENTP:SP(`“弟子决定去投个胎，换个新身子重开！{s}可别把弟子认错了。”|（{d}眨眨眼）“下回见面，弟子要是叫您一声师尊，您可得接住。”|“弟子会忘掉很多事，但大概忘不了怎么气您。”`),
+INFJ:SP(`“弟子要走了，去很远的地方。可弟子会回来的……请您别忘了弟子。”|（{d}把一片桃花瓣放进你掌心）“等桃花再开十几回，弟子就回来了。”|“这一世欠您的，弟子下一世再还。”`),
+INFP:SP(`（{d}哭着笑）“{s}，弟子舍不得……可弟子得先走，才能回来。”|“下辈子弟子还想做您的徒弟。您会认得弟子吗？”|“请您……偶尔想想弟子。弟子在那边会知道的。”`),
+ENFJ:SP(`“弟子去轮回了。替弟子照顾好大家，弟子会回来的。”|（{d}把洞府里的东西挨个看了一遍，像在点名）“都要好好的，等弟子回来。”|“{s}，答应弟子，别为弟子难过太久。”`),
+ENFP:SP(`“{s}！弟子要去投胎啦！下辈子弟子还要来烦您！”|（{d}勾住你的小指）“拉钩，您不许忘了弟子。”|“弟子会带着新的身子回来，但您还可以叫弟子原来的名字。”`),
+ISTJ:SP(`“弟子会走正途，入轮回，再回来。一切按规矩来。”|（{d}把你案上的书一本本摆整齐）“弟子回来之前，您别乱放东西。”|“{s}说过的每一句话，弟子都记得。下辈子也会记得。”`),
+ISFJ:SP(`“弟子走了，您要按时吃饭、按时歇息……弟子回来要检查的。”|（{d}替你掖了掖被角，动作和从前一模一样）“别忘了弟子，好不好？”|“弟子只是去绕一段远路，很快就回家。”`),
+ESTJ:SP(`“轮回的手续弟子办好了。十几年后，弟子回来报到。”|（{d}站得笔直）“{s}，弟子的名字别从门下名册上划掉。”|“弟子这辈子没做完的事，下辈子接着做。”`),
+ESFJ:SP(`“弟子舍不得{s}，舍不得大家……所以弟子一定会回来的。”|（{d}抱了抱你）“下回见面，记得先认出弟子哦。”|“弟子走了以后，逢年过节，给弟子留一副碗筷吧。”`),
+ISTP:SP(`“弟子走了。会回来的。”|（{d}沉默了很久，把一块磨得发亮的石子塞给你）“留着。弟子回来认。”|“忘了也没关系。弟子会再找过来。”`),
+ISFP:SP(`（{d}在你的袖口别了一朵花）“看见这种花开的时候，就想想弟子吧。”|“弟子要去很远的地方了……可弟子会回来的，一定。”|“下辈子，弟子还想在桃树下见您。”`),
+ESTP:SP(`“行吧，弟子去投个胎。十几年后又是一条好汉！”|（{d}大笑着捶了你一拳，拳头却穿过了你的肩）“{s}，等我回来再打一架！”|“别哭啊{s}，弟子又不是不回来了。”`),
+ESFP:SP(`“{s}，弟子要去投胎啦！下辈子还要当您门下最闹腾的那个！”|（{d}最后转了一个圈，衣角像花一样散开）“记住弟子现在的样子哦！”|“不许忘了弟子！忘了弟子，弟子就……就天天来梦里吵您！”`)};
+ghostCheck=function(){const dead=G.ds.filter(d=>d.status==='dead'&&!d.rbDone);
+  const el=dead.filter(d=>!d.rebornSched&&(d.love>=50||(d.crush||0)>=20||(d.memory||0)>=60));
+  if(el.length){const soon=el.filter(d=>(d.memory||0)>=60);G.queue.push({k:'ghost',id:(soon.length&&chance(.6)?pick(soon):pick(el)).id})}
+  const gone=dead.filter(d=>d.rebornSched&&!d.goneShown);if(gone.length){gone.forEach(d=>d.goneShown=true);const nm=gone.map(d=>d.name).join('、'),ta=gone.length>1?'他们':TA(gone[0]);
+    G.queue.push({k:'msg',title:'中元·空梦',html:`<p class="prose">中元夜，你在梦里的桃树下等了很久。<br>${nm}没有来。<br><br>夜风吹过，什么也没留下。或许${ta}已经走了——是终于放下了，还是实在放不下，要换一条路回来找你，你不知道。</p>`})}};
+const _ghost21=EV.ghost;
+EV.ghost=e=>{const d=getD(e.id);if(!d||d.status!=='dead'||d.rbDone||d.rebornSched)return nextEvent();addGuilt(d,1);if(G.over)return;_ghost21(e);
+  const pr=document.querySelector('#modal .prose');if(!pr)return;let h='';const m=d.memory||0;
+  if(m>=60&&m<100){const L=(d.demon>=50?ZY_DS:ZY_ZS)[d.mbti];if(L)h+=`<p class="prose">${fmt(pick(L),d)}</p>`}
+  h+=`<p class="hint">梦里梦外，愧疚又重了一层（${d.name} ${d.guilt} 层，共 ${guiltTotal()} 层）。</p>`;pr.insertAdjacentHTML('afterend',h)};
+// 清明
+openQingming=function(e){const dead=G.ds.filter(d=>d.status==='dead'&&!d.rbDone);e.swept=e.swept||{};const yh=countItem(G.bag,'p:yh:0');
+  modal({title:'清明',html:`<p class="prose">清明时节，细雨纷纷。</p>
+   <div class="blk"><h4>踏青</h4>${e.walk?'<p class="hint">已经带大家踏过青了。</p>':`<p class="hint">带门下弟子去后山踏青：所有人好感、心情上升，同门之间也更亲近。</p><button class="btn" onclick="qmWalk()">组织踏青</button>`}</div>
+   <div class="blk"><h4>扫墓</h4>${dead.length?dead.map(d=>`<div class="item"><div class="info"><div class="nm">${d.name}之墓</div><div class="ds">${seniorTitle(d)} · ${d.endDate||''}${d.guilt?` · 愧疚 ${d.guilt} 层`:''}${d.rebornSched?' · 魂已远去':''}</div></div>${e.swept[d.id]?'<span class="hint">已祭扫</span>':`<button class="btn sm" onclick="qmSweep(${d.id},0)">祭扫</button>${yh?`<button class="btn sm" onclick="qmSweep(${d.id},1)">焚引魂香</button>`:''}`}</div>`).join(''):'<p class="hint">门中无人陨落。这是好事。</p>'}
+   ${dead.some(d=>d.guilt)?'<p class="hint">祭扫可消解愧疚：普通祭扫 -1 层，焚引魂香 -2 层。</p>':''}</div>`,
+   btns:[{t:'离开',cls:'pri',fn:closeModal}]})};
+qmSweep=function(id,useYh){const e=G.events.find(x=>x.k==='qingming');const d=getD(id);if(!e||!d||(e.swept||{})[id])return;if(useYh&&!removeItem(G.bag,'p:yh:0'))return;e.swept[id]=true;const gone=!!d.rebornSched;
+  if(!gone){d.memory=(d.memory||0)+(useYh?50:20);clampD(d)}
+  const g0=d.guilt||0,cut=Math.min(g0,useYh?2:1);d.guilt=g0-cut;if(g0>0&&d.guilt===0)unlock('guiltclear');log(`清明，为${d.name}扫墓。`);
+  const body=gone?`你拂去碑上的落叶，摆上一碟${d.name}生前爱吃的点心。${useYh?'引魂香的烟直直地升上去，没有一丝停留。':''}<br>坟前很静。你忽然明白，${d.name}已经不在这里了——${TA(d)}去了很远的地方。是放下了，还是放不下，要换一条路回来，你不知道。`
+    :`你拂去碑上的落叶，摆上一碟${d.name}生前爱吃的点心。${useYh?'引魂香的烟气袅袅升起，久久不散。':''}${checkReborn(d)}`;
+  modal({title:`${d.name}之墓`,html:`<p class="prose">${body}</p>${cut?`<p class="hint">心里压着的石头轻了一些（对${d.name}的愧疚 -${cut}，余 ${d.guilt} 层）。</p>`:''}`,btns:[{t:'返回',cls:'pri',fn:()=>openQingming(e)}]})};
+// ---------- 结局与成就 ----------
+ENDINGS.uprising={t:'苍天已死',s:()=>`那一夜，${SECT()}的山门没有关。<br><br>各峰长老带着弟子，举着火把从四面八方涌上主峰。为首的人高声念着一句话：「苍天已死，黄天当立。」<br>你站在大殿前，看着那些曾经向你敬过酒的面孔。没有人敢直视你的眼睛，也没有人后退。<br><br>积了五年的不满，一夜之间烧成了燎原的火。<br><br>后来新宗主即位。史书上关于你的，只有一行：「${G.p.name}，宗主，失德于众，殁于宗变。」`};
+ENDINGS.shame={t:'无颜于世',s:()=>{const ns=G.ds.filter(d=>d.status==='dead').map(d=>d.name);return `你又一次在梦里看见了他们。<br>${ns.length?ns.join('、'):'那些人'}……一个一个站在桃树下，什么也不说，只是看着你。<br><br>你想起他们拜师那天奉上的茶，想起自己说过的那句「为师会护着你们」。<br>你一个也没有护住。<br><br>道心上的裂痕，终于再也合不拢了。那天清晨，弟子推开${G.cave}的门，发现你端坐在蒲团上，已经没有了气息。<br><br>${SECT()}的史书上写着：「${G.p.name}，${RANKS[Math.max(0,G.p.rank)]}，愧对门人，道心自毁。」`}};
+Object.assign(ACH,{
+  uprising:{n:'苍天已死',d:'宗门的不满积满五层，死于宗变'},
+  shame:{n:'无颜于世',d:'愧疚超过十层，道心自毁'},
+  okr1:{n:'摸鱼宗主',d:'当上宗主后，某年OKR恰好合格'},
+  okrfish:{n:'摸鱼才是真',d:'连续五年OKR都只是合格'},
+  okrmid:{n:'张弛有度',d:'连续五年OKR都是良好'},
+  okr4:{n:'超凡入圣',d:'年度OKR达到超凡'},
+  okr4x3:{n:'卷王',d:'连续三年OKR超凡'},
+  okrexp:{n:'众望所归',d:'宗门对你的期望涨到了 5000'},
+  okrrare:{n:'宗门至宝',d:'年会封赏中分到了稀世奇珍'},
+  okrdiss:{n:'众口铄金',d:'第一次积下宗门的不满'},
+  okrcalm:{n:'破财消灾',d:'拿出好处，平息了宗门议论'},
+  guiltclear:{n:'释怀',d:'在清明祭扫中消尽了对一名弟子的愧疚'}});
 </script>
 </body></html>
