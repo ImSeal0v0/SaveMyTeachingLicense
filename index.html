@@ -7011,7 +7011,8 @@ const _renderMain21=renderMain;
 renderMain=function(){_renderMain21();const pn=document.querySelector('.pcard .pname');if(pn){let h='';const g=guiltTotal();if(g>0)h+=`<button class="buff-ic guilt" onclick="openGuilt()" aria-label="愧疚 ${g} 层" title="愧疚">☁<b>${g}</b></button>`;if((G.anger||0)>0)h+=`<button class="buff-ic anger" onclick="openAnger()" aria-label="宗门的不满 ${G.anger} 层" title="宗门的不满">💢<b>${G.anger}</b></button>`;if(h)pn.insertAdjacentHTML('beforeend',h)}
   if(isLeader()){const st=document.querySelector('.pcard .stats');if(st){const L=okrLines();st.insertAdjacentHTML('afterend',`<p class="hint okr-line">合格 ${L[0]} · 良好 ${L[1]} · 优秀 ${L[2]} · 超凡 ${L[3]}<button class="link" onclick="openOkr()">OKR说明</button></p>`)}}};
 // ---------- 转世 / 夺舍 ----------
-FATES.jqhh={n:'借躯还魂',d:'夺舍归来，身沾因果：爱恋增长×1.5，心魔增长×1.4',love:1.5,demon:1.4};
+FATES.jqhh={n:'借躯还魂',d:'夺舍归来，身沾因果：修炼+10%，爱恋增长×1.5，心魔增长×1.4',cult:.1,love:1.5,demon:1.4};
+function rbNewName(d){const pool=d.gender==='m'?NM_M:d.gender==='f'?NM_F:[...NM_M,...NM_F];for(let i=0;i<200;i++){const g=pick(pool),n=pick(SUR)+g;if(!G.ds.some(o=>o.name===n||o.pastName===n))return{name:n,given:g}}return{name:d.name+'儿',given:(d.given||'')+'儿'}}
 // 夺舍概率：心魔<40 必不夺舍；否则 (心魔-40)% + 性格修正（TJ+30% / TP+20% / FP-20% / FJ-30%）
 function dsChance(d){const dm=d.demon||0;if(dm<40)return 0;const m=d.mbti||'',T=m[2]==='T',J=m[3]==='J';return clamp((dm-40)/100+(T?(J?.3:.2):(J?-.3:-.2)),0,1)}
 function rbPlanOf(d){if(!d.rbPlan)d.rbPlan=chance(dsChance(d))?'ds':'zs';return d.rbPlan}
@@ -7021,13 +7022,14 @@ checkReborn=function(d){if(!d||d.status!=='dead'||d.rbDone||d.rebornSched||(d.me
 const _walkin21=EV.walkin;
 EV.walkin=e=>{if(e.src!=='reborn')return _walkin21(e);const d=getD(e.old);if(!d||d.status!=='dead'||d.rbDone)return nextEvent();
   const ds=(d.rbType||rbPlanOf(d))==='ds';const age=ds?ri(12,17):(d.rbYear!=null?clamp(G.date.y-d.rbYear,10,17):14);d.rbAge=age;
-  const g0=d.guilt||0;d.guilt=0;d.rbDone=true;d.rebornSched=false;const free=freeSlots();const who=age>=18?'年轻人':'孩子';
-  const intro=ds?`一个${age}岁的${who}站在洞府外，眼神却老得可怕。${TA(d)}冲你笑了笑：“师尊，好久不见。”<br>那张脸你从没见过，可那是${d.name}的笑。一模一样。`:`一个${age}岁的${who}跪在洞府外。看见你的那一刻，${TA(d)}愣住了，脱口而出：“师尊……”<br>同样的名字，同样的眉眼——${d.name}。`;
-  evModal(ds?'夺舍归来':'转世归来',`<p class="prose">${intro}</p>${candCard({...d,age,fates:rbFates(d,ds)},-1,false)}<p class="hint">${ds?'夺舍：带着前世的全部记忆归来，心魔会持续滋长。':'转世：前世的一切都在，只是记忆还沉睡着。等好感满了，或许会想起来。'}<br>命格【${FATES[ds?'jqhh':'zs'].n}】：${FATES[ds?'jqhh':'zs'].d}${g0?`<br>压在你心上、对${d.name}的愧疚（${g0} 层），散了。`:''}<br>无论收不收，${TA(d)}都已经回到了这世上，清明与中元不会再见到${TA(d)}的魂魄。</p>`,
+  const g0=d.guilt||0;d.guilt=0;d.rbDone=true;d.rebornSched=false;const free=freeSlots();if(!ds&&!d.rbNew)d.rbNew=rbNewName(d);const shown=ds?d.name:d.rbNew.name;d.rbRealm=ri(0,3);const who=age>=18?'年轻人':'孩子';
+  const intro=ds?`一个${age}岁的${who}站在洞府外，眼神却老得可怕。${TA(d)}冲你笑了笑：“师尊，好久不见。”<br>那张脸你从没见过，可那是${d.name}的笑。一模一样。`:`一个${age}岁的${who}跪在洞府外。看见你的那一刻，${TA(d)}愣住了，脱口而出：“师尊……”<br>名字是陌生的，${TA(d)}说自己叫${shown}。可那眉眼——分明是当年的${d.name}。`;
+  evModal(ds?'夺舍归来':'转世归来',`<p class="prose">${intro}</p>${candCard({...d,age,name:shown,realm:d.rbRealm,fates:rbFates(d,ds)},-1,false)}<p class="hint">${ds?'夺舍：带着前世的全部记忆归来，心魔会持续滋长。':'转世：前世的一切都在，只是记忆还沉睡着。等好感满了，或许会想起来。'}<br>命格【${FATES[ds?'jqhh':'zs'].n}】：${FATES[ds?'jqhh':'zs'].d}${g0?`<br>压在你心上、对${d.name}的愧疚（${g0} 层），散了。`:''}<br>无论收不收，${TA(d)}都已经回到了这世上，清明与中元不会再见到${TA(d)}的魂魄。</p>`,
    [{t:free>0?'收入门下':`门下已满（${slotsMax()}人）`,cls:'pri',dis:free<=0,fn:()=>{reviveD(d,ds?'ds':'zs');closeModal()}},opt('婉拒',()=>{logD(d,`${ds?'夺舍':'转世'}归来，师尊没有收。`);log(`婉拒了${ds?'夺舍':'转世'}归来的${d.name}。`);closeModal()})])};
 function rbFates(d,ds){const k=ds?'jqhh':'zs';return [k,...(d.fates||[]).filter(f=>f!=='zs'&&f!=='jqhh')]}
 const _reviveD21=reviveD;
-reviveD=function(d,type){_reviveD21(d,type);d.fates=rbFates(d,type==='ds');codexFate(d.fates);d.rbPlan=null;d.age=d.rbAge||14;if(d.log&&d.log[0])d.log[0].s=String(d.log[0].s).replace('十四岁',d.age+'岁');d.rbDone=false;d.rbType=null;d.memory=0;d.goneShown=false;d.guilt=0;clampD(d)};
+reviveD=function(d,type){_reviveD21(d,type);d.fates=rbFates(d,type==='ds');codexFate(d.fates);d.rbPlan=null;d.realm=d.rbRealm!=null?d.rbRealm:ri(0,3);d.rbRealm=null;d.xp=0;
+  if(type==='zs'&&d.rbNew){const old=d.name;d.pastName=old;d.pastGiven=d.given;d.name=d.rbNew.name;d.given=d.rbNew.given;d.rbNew=null;logD(d,`今生名叫${d.name}，前世是${old}。`);log(`${old}转世归来，今生名叫${d.name}。`)}d.age=d.rbAge||14;if(d.log&&d.log[0])d.log[0].s=String(d.log[0].s).replace('十四岁',d.age+'岁');d.rbDone=false;d.rbType=null;d.memory=0;d.goneShown=false;d.guilt=0;clampD(d)};
 // 中元
 const ZY_DS={
 INTJ:SP(`（{d}站在桃树下，影子却比往常浓了几分）“{s}，弟子已经找好了路。这一次，不必等轮回。”|“弟子算过了。等不了那么久，也不想等。{s}，很快。”|（{d}伸手想碰你的脸，指尖穿过去时笑了一下）“下次，就碰得到了。”`),
@@ -7102,5 +7104,28 @@ Object.assign(ACH,{
   okrdiss:{n:'众口铄金',d:'第一次积下宗门的不满'},
   okrcalm:{n:'破财消灾',d:'拿出好处，平息了宗门议论'},
   guiltclear:{n:'释怀',d:'在清明祭扫中消尽了对一名弟子的愧疚'}});
+// 转世弟子忆起前世：选择名字
+const NAME_ASK={
+INTJ:'{ta}很快平复下来，像在推演一道题：“{past}是前世的名字，{now}是今生的。两个都是弟子，只是……师尊更习惯哪一个，弟子就用哪一个。这件事，弟子想由您来定。”',
+INTP:'{ta}挠了挠头，自言自语似的：“严格来说，{past}和{now}指的是同一个魂魄……可名字又不只是代号。”{ta}抬起眼，“算了，弟子想不明白。师尊，您说叫哪个？”',
+ENTJ:'{ta}站直了身子，目光灼灼：“{past}这个名字，当年没能在您门下走到最后。{now}是今生重新起的头。师尊，您要哪一个弟子——选吧。”',
+ENTP:'{ta}忽然笑出了声：“这可真有意思，一个人两个名字。师尊，您是想念旧的{past}，还是看上了新的{now}？说实话，弟子很好奇您会怎么选。”',
+INFJ:'{ta}沉默了很久，才轻声说：“{past}……是您当年唤了很多年的名字。{now}是这一世的爹娘给的。弟子两个都舍不得，所以，想听您的。”',
+INFP:'{ta}眼眶红红的，攥着衣角：“师尊……您还记得{past}这个名字吗？弟子现在叫{now}了，可弟子好怕您只记得从前那个弟子……您想叫弟子哪一个？”',
+ENFJ:'{ta}握住你的手，笑里带着泪：“师尊，大家现在都叫弟子{now}。可{past}是您给过弟子的、最好的那些年。您想怎么叫，弟子都欢喜。”',
+ENFP:'{ta}一下子扑过来：“师尊师尊！弟子以前叫{past}，现在叫{now}！两个都好好听，弟子选不出来——您帮弟子选一个嘛！”',
+ISTJ:'{ta}端正地跪下行了一礼：“弟子前世名{past}，今生名{now}。名册上只能记一个，此事须由师尊定夺。”',
+ISFJ:'过了好一会儿，{ta}才小声问：“弟子前世叫{past}，今生叫{now}……您想叫弟子哪一个？弟子……都听您的。”',
+ESTJ:'{ta}清了清嗓子，一板一眼地说：“师尊，弟子的名字得定下来，不然名册、月例、命牌都对不上。{past}还是{now}，请您给个准话。”',
+ESFJ:'{ta}拉着你的袖子，小心翼翼地问：“师尊，弟子以前叫{past}，现在叫{now}……您更喜欢叫哪个？您喜欢哪个，弟子就叫哪个。”',
+ISTP:'{ta}低头看了看自己的手，半晌才开口：“{past}，{now}。”顿了顿，“您挑一个。”',
+ISFP:'{ta}低着头，指尖轻轻碰了碰你的衣袖：“{past}是从前的弟子，{now}是现在的弟子……师尊，您想要哪一个？”',
+ESTP:'{ta}抹了把脸，咧嘴一笑：“行啊，绕了一大圈又回来了。师尊，{past}还是{now}？痛快点，您说了算。”',
+ESFP:'{ta}破涕为笑，在你面前转了一圈：“师尊您看，弟子换了副模样回来啦！那您是要叫弟子{past}，还是{now}？快选快选！”'};
+const _remember21=EV.remember;
+EV.remember=e=>{const d=getD(e.id);if(!d||d.mem||!d.pastName||d.pastName===d.name)return _remember21(e);d.mem=true;const past=d.pastName,now=d.name;logD(d,'忆起了前世的一切。');log(`${now}忆起了前世。`);
+  const setName=n=>{if(n!==d.name){const o=d.name;d.name=n;d.given=n===past?(d.pastGiven||d.given):d.given;logD(d,`师尊说，还叫${TA(d)}${n}。`);log(`${o}改回了前世的名字「${n}」。`)}else logD(d,`师尊说，今生就叫${n}。`);d.pastName=null;save();closeModal()};
+  modal({title:'前尘',x:false,html:`<p class="prose">${now}忽然停下了手里的事，怔怔地看着你，很久很久。<br>“师尊……”${TA(d)}的声音在发抖，“我想起来了。我全都想起来了。”<br><br>${(NAME_ASK[d.mbti]||NAME_ASK.ISFJ).replace(/\{past\}/g,past).replace(/\{now\}/g,now).replace(/\{ta\}/g,TA(d))}</p>`,
+   btns:[{t:`还叫你${past}`,cls:'pri',fn:()=>setName(past)},{t:`就叫${now}`,fn:()=>setName(now)}]})};
 </script>
 </body></html>
