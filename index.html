@@ -5085,7 +5085,7 @@ function pairDay(){const hs=presentDs().filter(d=>!injD(d)&&!(d.child&&d.age<6))
   for(let i=0;i<hs.length;i++)for(let j=i+1;j<hs.length;j++){const a=hs[i],b=hs[j];if(a._cult&&b._cult)addRel(a,b,.08);
     if(chance(.025)){const v=getRel(a,b);if(v>=20){const t=pick(PAIR_A.good);a.notes.push(pairNote(a,b,t));b.notes.push(pairNote(b,a,t));addRel(a,b,1);a.mood+=2;b.mood+=2}
       else if(v<=-20){a.notes.push(pairNote(a,b,pick(PAIR_A.bad)));addRel(a,b,-1);b.mood-=2}}}
-  hs.forEach(a=>{const f=fx(a);if((f.bully||a.demon>=60)&&chance(.01)){const b=pickSib(a,hs);if(b){addRel(a,b,-6);b.mood-=6;a.notes.push(`欺负了${sibName(a,b)}`);b.notes.push(`被${sibName(b,a)}欺负了，躲起来哭了一场`);clampD(b)}}})}
+  hs.forEach(a=>{const f=fx(a);if((f.bully||a.demon>=60)&&chance(.01)){const b=pickSib(a,hs.filter(x=>x.realm<=a.realm&&x.age<=a.age+3));if(b){addRel(a,b,-6);b.mood-=6;a.notes.push(`欺负了${sibName(a,b)}`);b.notes.push(`被${sibName(b,a)}欺负了，躲起来哭了一场`);clampD(b)}}})}
 function onMonth(){
   const p=G.p;const jade=25+20*p.rank;p.jade+=jade;addItem(G.bag,`p:jq:${Math.min(3,Math.floor(p.rank/2.5))}`);addItem(G.bag,'p:jx:0');if(p.rank>=4)addItem(G.bag,'p:pj:'+(p.rank>=7?2:p.rank>=5?1:0));
   let k=0;homeDs().forEach(d=>{if(d.child&&d.age<6)return;const v=2+Math.floor(d.realm/5);k+=v;const T=MB[d.mbti],f=fx(d);
@@ -6340,7 +6340,7 @@ function fateEff(d,e,sib){const T=MB[d.mbti];
   case'hurt':hurtD(d,ri(5,15));break;case'cliff':hurtD(d,ri(10,25));if(d.status!=='dead')addDXP(d,needXP(d.realm)*.06);break;
   case'beast':d.beasts=(d.beasts||0)+1;break}}
 function fateDay(d){if(d.status!=='home'||(d.child&&d.age<6))return;d.fates.forEach(k=>{const L=FATE_SCHED[k];if(!L||!chance(.03))return;const sib=pickSib(d);const effs=(FATE_EFF[k]||'xp').split(' ');fateEff(d,pick(effs),sib);if(d.status==='dead')return;
-  let t=pick(L);if(/\{sib\}/.test(t)&&!sib)t=pick(L.filter(x=>!/\{sib\}/.test(x)))||t.replace(/\{sib\}/g,'同门');d.notes.push(fmt(t,d,sib).replace(/\{k\}/g,Math.max(1,d.beasts||1)));clampD(d)})}
+  const LF=L.filter(x=>seniorityOK(d,x,sib)&&!(/指点\{sib\}|被\{sib\}请教|教\{sib\}/.test(x)&&sib&&sib.realm>d.realm));let t=pick(LF.length?LF:L.filter(x=>!/\{sib\}/.test(x)&&seniorityOK(d,x)));if(!t)return;if(/\{sib\}/.test(t)&&!sib)t=pick(L.filter(x=>!/\{sib\}/.test(x)))||t.replace(/\{sib\}/g,'同门');d.notes.push(fmt(t,d,sib).replace(/\{k\}/g,Math.max(1,d.beasts||1)));clampD(d)})}
 const _simD12=simDisciple;
 simDisciple=function(d){_simD12(d);try{fateDay(d)}catch(e){}};
 // 灵兽越多战力越高
@@ -6479,11 +6479,11 @@ const PAIR_EVS=(PAIR_EV||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=
 function pairFmt(s,a,b){return String(s).replace(/\{a\}/g,a.name).replace(/\{b\}/g,b.name).replace(/\{s\}/g,'师尊')}
 function pairEff(e,a,b){const before=[snap(a),snap(b)];(e||'').split(/\s+/).filter(Boolean).forEach(t=>{const m=t.match(/^(r|fa|fb|ma|mb|da|db)(-?\d+)$/);if(!m)return;const v=+m[2];switch(m[1]){case'r':addRel(a,b,v);break;case'fa':a.favor+=v;break;case'fb':b.favor+=v;break;case'ma':a.mood+=v;break;case'mb':b.mood+=v;break;case'da':a.demon+=v;break;case'db':b.demon+=v;break}});clampD(a);clampD(b);
   const da=deltaText(before[0],a),db=deltaText(before[1],b);return [da&&`${a.name}：${da}`,db&&`${b.name}：${db}`,`两人关系 ${Math.round(getRel(a,b))}`].filter(Boolean).join('<br>')}
-EV.pairev=e=>{const a=getD(e.a),b=getD(e.b),P=PAIR_EVS[e.i];if(!a||!b||!P||a.status!=='home'||b.status!=='home'||a.away>0||b.away>0)return nextEvent();
+EV.pairev=e=>{const a=getD(e.a),b=getD(e.b),P=PAIR_EVS[e.i];if(!a||!b||!P||a.status!=='home'||b.status!=='home'||a.away>0||b.away>0||!pairReqOK(P,a,b))return nextEvent();
   evModal('同门之间',`<p class="prose">${pairFmt(P.q,a,b)}</p>`,P.o.map(o=>opt(pairFmt(o.t,a,b),()=>{const dt=pairEff(o.e,a,b);logD(a,pairFmt(`和{b}之间出了点事，师尊${o.t}。`,a,b));logD(b,pairFmt(`和{a}之间出了点事，师尊${o.t}。`,a,b));
     modal({title:'同门之间',html:`<p class="prose">${pairFmt(o.r,a,b)}</p><div class="delta">${dt}</div>`,btns:[{t:'好',cls:'pri',fn:closeModal}]})})))};
 const _endTurn14=endTurn;
-endTurn=function(from){if(G&&!G.over&&PAIR_EVS.length){const ps=presentDs().filter(d=>!(d.child&&d.age<6)&&!injD(d)&&!d.sick);if(ps.length>=2&&chance(.12)&&G.queue.filter(q=>q.k==='pairev').length<4){const s=ps.sort(()=>R()-.5);G.queue.push({k:'pairev',a:s[0].id,b:s[1].id,i:ri(0,PAIR_EVS.length-1)})}}return _endTurn14(from)};
+endTurn=function(from){if(G&&!G.over&&PAIR_EVS.length){const ps=presentDs().filter(d=>!(d.child&&d.age<6)&&!injD(d)&&!d.sick);if(ps.length>=2&&chance(.12)&&G.queue.filter(q=>q.k==='pairev').length<4){const pe=pickPairEv(ps);if(pe)G.queue.push(pe)}}return _endTurn14(from)};
 // 互动台词：按性格 + 好感/爱恋/心魔组合
 const ACT_SP={};for(const k in ACT_S)ACT_SP[k]=(ACT_S[k]||[]).map(s=>{const p=s.split('@');return{a:p[0],c:(p[1]||'').trim().split(/\s+/).filter(Boolean),t:p.slice(2).join('@')}}).filter(x=>x.t);
 let LAST_ACT14=null;
@@ -6492,7 +6492,7 @@ interact=function(id,act){LAST_ACT14=['chat','care','spur','scold','abuse'].incl
 const _renderInteract14=renderInteract;
 renderInteract=function(d,line,delta,narr){const act=LAST_ACT14;LAST_ACT14=null;
   if(act&&line!=null&&d&&!isNem(d)&&!(d.child&&d.age<6)&&!(act==='chat'&&(d.bday||d.mem))){const sib=pickSib(d);
-    const sp=(ACT_SP[d.mbti]||[]).filter(x=>x.a===act&&condOK({cond:x.c,o:[]},d,sib));const L=(ACT_L[d.mbti]||{})[act];
+    const sp=(ACT_SP[d.mbti]||[]).filter(x=>x.a===act&&seniorityOK(d,x.t,sib)&&condOK({cond:x.c,o:[]},d,sib));const L=((ACT_L[d.mbti]||{})[act]||[]).filter(x=>seniorityOK(d,x,sib));
     if(sp.length&&chance(.45))line=fmt(pick(sp).t,d,sib);else if(L&&L.length&&chance(act==='chat'?.4:.55))line=fmt(pick(L),d,sib)}
   return _renderInteract14(d,line,delta,narr)};
 </script>
@@ -6523,7 +6523,7 @@ EV.greq=e=>{const d=getD(e.id);const P=(GREQ[e.pool]||[])[e.i];if(!d||!P)return 
 const _extMonth15=extMonth;
 extMonth=function(){_extMonth15();G.ds.forEach(d=>{if(G.queue.some(q=>q.id===d.id))return;let pool=null;
   if(d.status==='grad'&&chance(.06))pool=GREQ[d.mbti]&&GREQ[d.mbti].length&&chance(.55)?d.mbti:'gen';else if(isNem(d)&&chance(.035))pool='nem';if(!pool)return;
-  const ok=GREQ[pool].map((t,i)=>i).filter(i=>condOK({cond:GREQ[pool][i].cond,o:[]},d,null)&&!(d.reqSeen||[]).includes(pool+i));if(!ok.length)return;const i=pick(ok);d.reqSeen=(d.reqSeen||[]).concat(pool+i).slice(-60);G.queue.push({k:'greq',id:d.id,pool,i})})};
+  const ok=GREQ[pool].map((t,i)=>i).filter(i=>condOK(GREQ[pool][i],d,null)&&!(d.reqSeen||[]).includes(pool+i));if(!ok.length)return;const i=pick(ok);d.reqSeen=(d.reqSeen||[]).concat(pool+i).slice(-60);G.queue.push({k:'greq',id:d.id,pool,i})})};
 // —— 叛离弟子请求重回师门 ——
 const _nemAct15=nemAct;
 nemAct=function(id,act){const d=getD(id);const ap=nemAp();_nemAct15(id,act);if(!d||!isNem(d)||G.over||nemAp()>=ap||!['chat','care'].includes(act))return;
@@ -6634,8 +6634,8 @@ EV.heart=function(e){const i=G.p.eq.indexOf('f:zqj');if(i<0)return _evHeart17(e)
 // —— 邀约频率：外向多约、内向少约；同一弟子 30 日内只约一次 ——
 const isE=d=>d.mbti[0]==='E';
 rollInvite=function(){const now=dn(G.date);const ds=presentDs().filter(d=>!injD(d)&&!d.sick&&!(d.child&&d.age<6)&&!((d.invCd||0)>now)).sort(()=>R()-.5);
-  for(const d of ds){const p=(.03+d.favor/1200+(d.age>=18?d.love/900:0)+(MB[d.mbti].g==='SP'?.02:0))*(isE(d)?1.3:.7);if(!chance(p))continue;const pool=INVITES.filter(i=>i.c(d));if(!pool.length)continue;
-    const rom=pool.filter(i=>i.rom),own=pool.filter(i=>i.mb===d.mbti),bp=pool.filter(i=>i.b);const inv=bp.length&&chance(.35)?pick(bp):rom.length&&chance(.3)?pick(rom):own.length&&chance(.45)?pick(own):pick(pool);d.invCd=now+30;return{k:'invite',id:d.id,inv:inv.k,t:pick(inv.t)}}return null};
+  for(const d of ds){const p=(.03+d.favor/1200+(d.age>=18?d.love/900:0)+(MB[d.mbti].g==='SP'?.02:0))*(isE(d)?1.3:.7);if(!chance(p))continue;const pool=INVITES.filter(i=>i.c(d)&&i.t.some(x=>seniorityOK(d,x)));if(!pool.length)continue;
+    const rom=pool.filter(i=>i.rom),own=pool.filter(i=>i.mb===d.mbti),bp=pool.filter(i=>i.b);const inv=bp.length&&chance(.35)?pick(bp):rom.length&&chance(.3)?pick(rom):own.length&&chance(.45)?pick(own):pick(pool);d.invCd=now+30;return{k:'invite',id:d.id,inv:inv.k,t:pick(inv.t.filter(x=>seniorityOK(d,x)))}}return null};
 const _doInvite17=doInvite;
 doInvite=function(d,inv,all){const k=isE(d)?.75:1.3;const e={};for(const x in inv.e){const v=inv.e[x];e[x]=(typeof v==='number'&&['x','f','m','l'].includes(x)&&v>0)?Math.round(v*k):v}return _doInvite17(d,{...inv,e},all)};
 function inviteRefuse(d){const T=MB[d.mbti];if(isE(d)){d.mood-=4;d.favor-=1}else{d.mood-=10;d.favor-=5;d.demon+=4*T.dark}if(T.refuse==='hurt')d.demon+=2;logD(d,'鼓起勇气邀请师尊，被婉拒了。')}
@@ -6677,5 +6677,52 @@ const _pFx17=pFx;pFx=function(){const o=_pFx17();if(bActive('jxh'))o.calm=Math.m
 const _simD17=simDisciple;simDisciple=function(d){_simD17(d);if(bActive('lch')&&d.status==='home'){d.mood+=.3;clampD(d)}};
 // 建筑邀约
 INV_B.forEach(v=>{if(INVITES.some(i=>i.k===v.k))return;const rom=/(^|\s)(A|L\d+)(\s|$)/.test(v.cond||'')&&!!(v.e&&(v.e.l||v.e.h));INVITES.push({k:v.k,n:v.n,days:v.days||1,b:v.b,rom,t:v.t,e:v.e||{},r:v.r,c:d=>bActive(v.b)&&(!v.g||MB[d.mbti].g===v.g)&&(!rom||d.age>=18)&&condStr(v.cond,d)})});
+</script>
+<script>
+// ================= v18：长幼排辈 / 修为强弱 一致性 =================
+// 台词里提到师弟师妹、新入门、大师兄等，需与说话者在师门中的实际辈分相符
+const ORD_N={'大':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+const NUM_N={'两':2,'二':2,'三':3,'四':4,'五':5,'几':2,'各':2};
+function seniorityOK(d,text,sib){if(!d||!text)return true;text=String(text);const alive=o=>o!==d&&o.status!=='dead'&&!(o.child&&o.age<6)&&o.seq;const peers=d.status==='home'?G.ds.filter(o=>alive(o)&&o.status==='home'):G.ds.filter(alive);
+  const male=ch=>ch==='兄'||ch==='弟',senior=ch=>ch==='兄'||ch==='姐';const fits=(o,ch)=>isElder(o)===male(ch)&&(senior(ch)?o.seq<d.seq:o.seq>d.seq);const notSib=o=>!(sib&&o===sib&&/\{sib\}/.test(text));
+  const plain=text.replace(/\{sib\}/g,'');
+  if(/大师兄|大师姐/.test(plain)&&d.status==='home'&&homeDs().some(o=>o!==d&&o.seq<d.seq))return false;
+  if(/师弟|师妹|新入门|新来的师|带着?新人|带新弟子/.test(text)&&!peers.some(o=>o.seq>d.seq))return false;
+  if(/师兄们|师姐们|师兄师姐/.test(text)&&!G.ds.some(o=>o!==d&&o.seq&&o.seq<d.seq))return false;
+  // 写死的排行：二师兄、三师妹……必须真有这位同门
+  for(const m of plain.matchAll(/([大二三四五六七八九十])师(兄|姐|弟|妹)/g)){const n=ORD_N[m[1]],ch=m[2];if(n===1&&senior(ch)&&d.seq===1)continue;if(!peers.some(o=>o.seq===n&&fits(o,ch)&&notSib(o)))return false}
+  // 小师弟 / 小师妹：得有比自己晚入门的这样一位
+  for(const m of plain.matchAll(/小师(弟|妹)/g)){if(!peers.some(o=>fits(o,m[1])&&notSib(o)))return false}
+  // 两位师姐、三位师兄师姐、有位师弟……
+  for(const m of plain.matchAll(/([两二三四五几各一有那这])位师(兄|姐|弟|妹)(?!弟|妹)(师(兄|姐|弟|妹))?/g)){const n=NUM_N[m[1]]||1;const ok=peers.filter(o=>m[3]?(senior(m[2])?o.seq<d.seq:o.seq>d.seq):fits(o,m[2]));if(ok.length<n)return false}
+  return true}
+const topicText=t=>[t.q||'',...(t.o||[]).map(o=>(o.t||'')+(o.r||''))].join('|');
+const _condOK18=condOK;
+condOK=function(t,d,sib){if(!_condOK18(t,d,sib))return false;const tx=topicText(t);if(tx.length>1){if(!seniorityOK(d,tx,sib))return false;if(sib&&/指点\{(sib|ta2)\}|教\{sib\}/.test(tx)&&sib.realm>d.realm)return false}return true};
+const _chatLine18=chatLine;
+chatLine=function(d){let l='';for(let i=0;i<6;i++){l=_chatLine18(d);if(seniorityOK(d,l))return l}return l};
+// 女弟子自称时用“大师姐”
+const _fmt18=fmt;
+fmt=function(s,d,sib){let r=_fmt18(s,d,sib);if(d&&typeof isElder==='function'&&!isElder(d))r=r.replace(/大师兄/g,'大师姐');if(d)r=r.replace(/师兄（师姐）/g,isElder(d)?'师兄':'师姐');return r};
+// —— 同门事件：谁是新人、谁修为高，按实际情况分配角色 ——
+const PAIR_REQ=[
+  ['仅剩的一本《流云剑诀》',(a,b)=>a.realm<b.realm],
+  ['新入门的{a}被老弟子{b}',(a,b)=>a.seq>b.seq&&b.realm>a.realm&&b.age>=a.age],
+  ['灵气最足的洞府',(a,b)=>rootMult(b.root)>=rootMult(a.root)],
+  ['比赛谁先筑基',(a,b)=>a.realm<=10&&b.realm<=10],
+  ['筑基丹让给了卡在瓶颈',(a,b)=>a.realm<=10&&b.realm<=10&&b.realm>=6],
+  ['被后入门的{b}反超',(a,b)=>b.seq>a.seq&&b.realm>a.realm],
+  ['一个入门早一个年纪大',(a,b)=>a.seq<b.seq&&a.age<b.age],
+  ['被外宗弟子欺负',(a,b)=>b.realm>=a.realm],
+  ['凡人相好',(a,b)=>b.age>=18],
+  ['接{a}回去成亲',(a,b)=>a.age>=18],
+  ['起了个难听的外号',(a,b)=>a.age<18||b.age<18],
+  ['嘲笑{a}出身低微',(a,b)=>b.realm>=a.realm-2],
+  ['练功走火入魔差点伤了',(a,b)=>a.realm>=b.realm-2]];
+PAIR_EVS.forEach(P=>{const r=PAIR_REQ.find(x=>P.q.includes(x[0]));P.req=r?r[1]:null;if(P.q.includes('一个入门早一个年纪大'))P.o.forEach(o=>{o.r=o.r.replace('叫了一声师兄','叫了一声{xa}')})});
+function pairReqOK(P,a,b){return !P.req||!!P.req(a,b)}
+function pickPairEv(ps){for(let n=0;n<12;n++){const i=ri(0,PAIR_EVS.length-1),P=PAIR_EVS[i];const pairs=[];for(const a of ps)for(const b of ps)if(a!==b&&pairReqOK(P,a,b))pairs.push([a,b]);if(pairs.length){const [a,b]=pick(pairs);return{k:'pairev',a:a.id,b:b.id,i}}}return null}
+const _pairFmt18=pairFmt;
+pairFmt=function(s,a,b){return _pairFmt18(String(s).replace(/\{xa\}/g,isElder(a)?'师兄':'师姐').replace(/\{xb\}/g,isElder(b)?'师兄':'师姐'),a,b)};
 </script>
 </body></html>
