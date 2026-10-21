@@ -6374,4 +6374,80 @@ const _addRel15=addRel;
 addRel=function(a,b,v){if(!a||!b||a===b||v<=0||isKin(a,b))return _addRel15(a,b,v);const lp=x=>x.age>=18&&!x.child&&x.love>=60;if(!lp(a)&&!lp(b))return _addRel15(a,b,v);
   const cur=getRel(a,b);if(cur>=50)return;_addRel15(a,b,v);const k=relKey(a,b);if(G.rel[k]>50)G.rel[k]=50};
 </script>
+<script>
+// ================= v16：徒弟结局图鉴 / 新成就 =================
+ACH.hpdie=ACH.hpdie||{n:'伤重不治',d:'气血耗尽，伤重坐化'};
+Object.assign(ACH,{
+  retback:{n:'浪子回头',d:'将叛逃的弟子重新收入门下'},
+  retrej:{n:'覆水难收',d:'拒绝了叛离弟子重回师门的请求'},
+  escape:{n:'虎口脱险',d:'从叛离弟子布下的囚笼中脱身'},
+  nemvisit:{n:'千里寻徒',d:'成功寻访到叛离弟子 5 次'},
+  nemfeast:{n:'不速之客',d:'有叛离弟子闯进了你的家宴'},
+  nembday:{n:'旧情难忘',d:'收到叛离弟子送来的生辰贺礼'},
+  nemhelp:{n:'藕断丝连',d:'暗中帮助叛离弟子 3 次'},
+  gradhelp:{n:'有求必应',d:'出手帮助出师弟子 10 次'},
+  fateend:{n:'天命所归',d:'有弟子出师后走上了命格注定的道路'},
+  end20:{n:'桃李百态',d:'图鉴收集 20 种徒弟结局'},
+  end100:{n:'众生百相',d:'图鉴收集 100 种徒弟结局'},
+  beast10:{n:'万兽之师',d:'有弟子收服了 10 只灵兽'},
+  ssj3:{n:'镜花水月',d:'用碎了三面三生镜'},
+  tend5:{n:'衣不解带',d:'亲手照料治好弟子的病 5 次'},
+  leave:{n:'人走茶凉',d:'闭关期间有弟子出走断师'},
+  pair10:{n:'和事佬',d:'处理同门之间的事 10 次'},
+  mail3:{n:'已读不回',d:'有出师弟子攒了 3 封未回的信'},
+  tribute:{n:'万寿无疆',d:'当宗主时，一次生辰收到 5000 灵玉以上的孝敬'},
+  invite30:{n:'陪伴是最长情的告白',d:'累计答应徒弟 30 次邀约'},
+  brink:{n:'悬崖勒马',d:'动心一度达到 90，却活了下来'},
+  dsback:{n:'夺舍归来',d:'有弟子以夺舍之身重回师门'},
+  remember:{n:'前尘如梦',d:'转世的弟子想起了前世'},
+  trek3:{n:'放养式教育',d:'同时有 3 名弟子在山下历练'},
+  disgrace:{n:'威信扫地',d:'宗门KPI 跌到负数'}});
+const stat16=(k,n)=>{G.stats[k]=(G.stats[k]||0)+1;return G.stats[k]>=n};
+// 通过日志文本挂钩（集中处理，避免改动各处闭包）
+const _log16=log;
+log=function(s){_log16(s);try{s=String(s);if(s.includes('重收门下'))unlock('retback');if(s.includes('叛出师门的')&&s.includes('生辰贺礼'))unlock('nembday');if(s.includes('出走断师'))unlock('leave');if(s.includes('夺舍归来'))unlock('dsback');
+  const m=s.match(/送来贺礼，共灵玉 (\d+)/);if(m&&+m[1]>=5000)unlock('tribute')}catch(e){}};
+const _logD16=logD;
+logD=function(d,s){_logD16(d,s);try{s=String(s);if(s.includes('重回师门，被拒绝'))unlock('retrej');if(s.includes('不请自来'))unlock('nemfeast');if(s.includes('忆起了前世'))unlock('remember');if(s.includes('病中师尊照料了三回')&&stat16('tendCure',5))unlock('tend5');
+  if(s.includes('师尊亲自寻来')&&stat16('nemFound',5))unlock('nemvisit');if(s.includes('之间出了点事')&&stat16('pairEv',20))unlock('pair10')}catch(e){}};
+const _result16=result;
+result=function(t,d,sib){if(/撕开禁制|演了七日的戏|你走吧。趁我还没后悔/.test(String(t)))unlock('escape');return _result16(t,d,sib)};
+// 求助：付出代价才算“帮”
+const _reqEff16=reqEff;
+reqEff=function(d,e){const cost=/(^|\s)(t\d+|j-\d+|w\d+|P|F)(\s|$)/.test(e||'');const r=_reqEff16(d,e);if(cost){if(isNem(d)){if(stat16('nemHelp',3))unlock('nemhelp')}else if(stat16('gradHelp',10))unlock('gradhelp')}return r};
+const _fateEff16=fateEff;
+fateEff=function(d,e,sib){_fateEff16(d,e,sib);if(e==='beast'&&(d.beasts||0)>=10)unlock('beast10')};
+const _ssjLook16=ssjLook;
+ssjLook=function(k,id){_ssjLook16(k,id);if(SSJ_BROKE&&stat16('ssjBroke',3))unlock('ssj3')};
+const _sendMail16=sendMail;
+sendMail=function(d){if(G.mail.filter(m=>m.did===d.id&&!m.replied).length>=3)unlock('mail3');return _sendMail16(d)};
+const _doInvite16=doInvite;
+doInvite=function(d,inv,all){if(stat16('invites',30))unlock('invite30');return _doInvite16(d,inv,all)};
+const _setGoal16=setGoal;
+setGoal=function(id,g){_setGoal16(id,g);if(homeDs().filter(x=>x.trek).length>=3)unlock('trek3')};
+// —— 徒弟结局图鉴 ——
+CODEX.careers=CODEX.careers||[];
+function recordCareers(){if(!G)return;let ch=false;G.ds.forEach(d=>{if(d.career==null)return;const C=CAREERS[d.career];if(C&&!CODEX.careers.includes(C.n)){CODEX.careers.push(C.n);ch=true}});
+  if(ch){saveCodex();if(CODEX.careers.length>=20)unlock('end20');if(CODEX.careers.length>=100)unlock('end100')}}
+const _graduate16=graduate;
+graduate=function(d){_graduate16(d);const C=CAREERS[d.career];if(C&&C.fate&&d.fates.includes(C.fate))unlock('fateend');recordCareers()};
+const _endTurn16=endTurn;
+endTurn=function(from){try{recordCareers();if(G&&G.p.kpi<0)unlock('disgrace');if(G&&heartTotal()>=90)G.brink=true}catch(e){}return _endTurn16(from)};
+const _extMonth16=extMonth;
+extMonth=function(){_extMonth16();if(G.brink&&heartTotal()<50&&!G.over){G.brink=false;unlock('brink')}};
+const _openCodex16=openCodex;
+openCodex=function(tab){if(tab!=='grad')return _openCodex16(tab);
+  const T={fate:'命格',end:'结局',ach:'成就',grad:'徒弟结局'};const got=new Set(CODEX.careers||[]);const esc_=s=>String(s).replace(/\{d\}/g,'某弟子').replace(/\{ta\}/g,'TA').replace(/\{s\}/g,'师尊').replace(/\{n\}/g,'师尊');
+  const row=C=>got.has(C.n)?`<div class="item"><div class="info"><div class="nm">${C.n}</div>${C.d?`<div class="ds">${esc_(C.d)}</div>`:''}</div></div>`:'';
+  const base=CAREERS.filter(C=>!C.mb&&!C.fate),per=CAREERS.filter(C=>C.mb),fat=CAREERS.filter(C=>C.fate);const cnt=a=>a.filter(C=>got.has(C.n)).length;
+  const block=(title,arr,open)=>{const n=cnt(arr);return `<details ${open?'open':''} style="border:1px solid var(--line);border-radius:10px;padding:8px 10px"><summary style="cursor:pointer;font-weight:600">${title} <span class="hint">${n}/${arr.length}</span></summary><div class="items" style="margin-top:8px">${arr.map(row).join('')}${n<arr.length?`<p class="hint">尚有 ${arr.length-n} 种未见。</p>`:''}</div></details>`};
+  const byFate={};fat.forEach(C=>{(byFate[C.fate]=byFate[C.fate]||[]).push(C)});
+  const fateBlocks=Object.keys(byFate).map(k=>{const known=(CODEX.fates||[]).includes(k)||byFate[k].some(C=>got.has(C.n));return block(known&&FATES[k]?`命格 · ${FATES[k].n}`:'命格 · ？？？',byFate[k],false)}).join('');
+  const total=CAREERS.length,all=got.size;
+  const body=`<p class="hint">已收集 ${Math.min(all,total)}/${total} 种徒弟结局（跨存档保留）。不同性格、命格的弟子出师后会走上不同的路。</p>${block('寻常出路',base,true)}${block('性格使然',per,false)}<p class="hint" style="margin-top:6px">命格注定</p>${fateBlocks}`;
+  modal({title:'图鉴',html:`<div class="tabs">${Object.entries(T).map(([k,v])=>`<button class="${tab===k?'on':''}" onclick="openCodex('${k}')">${v}</button>`).join('')}</div>${body}`})};
+// 原图鉴页签加上“徒弟结局”
+const _modal16=modal;
+modal=function(o){if(o&&o.title==='图鉴'&&o.html&&o.html.includes('<div class="tabs">')&&!o.html.includes(`openCodex('grad')`))o.html=o.html.replace(/(<div class="tabs">[\s\S]*?)(<\/div>)/,`$1<button onclick="openCodex('grad')">徒弟结局</button>$2`);return _modal16(o)};
+</script>
 </body></html>
