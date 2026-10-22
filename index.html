@@ -8197,7 +8197,8 @@ YAO_T.butterfly+=`
 </script>
 
 <style>
-.yao-b{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:3px;border-radius:4px;background:#7a4a9a;color:#fff;font-size:10px;line-height:1;vertical-align:middle;font-weight:600}
+.yao-b{display:inline-block;margin-left:3px;font-size:14px;line-height:1;vertical-align:middle;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
+.yao-c{position:absolute;top:5px;left:6px;font-size:18px;line-height:1;pointer-events:none;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
 .dcard.yao{border-color:#9a6ab8}
 .star-btn{font-size:15px}
 .stars svg{width:100%;height:auto;display:block;background:radial-gradient(circle at 50% 40%,#2a2d4a,#14152a);border-radius:12px}
@@ -8336,7 +8337,10 @@ const _renderMain26=renderMain;renderMain=function(){_renderMain26();if(!G.starM
 // ---------- 妖族弟子 ----------
 const YAO_K=Object.keys(YAO);
 Object.assign(FATES,{ydzg:{n:'异道桎梏',d:'妖身修人道，处处掣肘：修炼速度减半'}});YAO_K.forEach(k=>{FATES['y_'+k]=Object.assign({n:YAO[k].n,d:YAO[k].fd},YAO[k].fx||{})});
-const yaoBadge=d=>d&&d.yao&&YAO[d.yao]?`<span class="yao-b" title="${YAO[d.yao].n}">${YAO[d.yao].ch}</span>`:'';
+const YAO_EM={fox:'🦊',wolf:'🐺',cat:'🐱',tiger:'🐯',rabbit:'🐰',deer:'🦌',bear:'🐻',bird:'🐦',snake:'🐍',butterfly:'🦋'};
+const yaoEm=d=>YAO_EM[d.yao]||YAO[d.yao].ch;
+const yaoBadge=d=>d&&d.yao&&YAO[d.yao]?`<span class="yao-b" title="${YAO[d.yao].n}">${yaoEm(d)}</span>`:'';
+const yaoCorner=d=>d&&d.yao&&YAO[d.yao]?`<span class="yao-c" title="${YAO[d.yao].n}">${yaoEm(d)}</span>`:'';
 function genYao(type){type=type||pick(YAO_K);const Y=YAO[type];const c=genDisciple();c.yao=type;c.age=ri(15,19);c.realm=ri(3,8);c.fates=['y_'+type,'ydzg',...(chance(.5)?[pick(FATE_POOL.filter(f=>!['ss','wy','ll','fh'].includes(f)))]:[])];
   const pool=c.gender==='m'?NM_M:c.gender==='f'?NM_F:[...NM_M,...NM_F];for(let i=0;i<200;i++){c.given=pick(Y.given||pool);c.name=pick(Y.sur)+c.given;if(!nameTaken(c.name))break}return c}
 const _walkin26=EV.walkin;
@@ -8349,7 +8353,7 @@ const _graduate26=graduate;graduate=function(d){const k0=G.p.kpi;_graduate26(d);
 const _onMonth26b=onMonth;onMonth=function(){_onMonth26b();if(!G||G.over)return;homeDs().forEach(d=>{if(!d.yao)return;if(d.favor<25)d.yaoLow=(d.yaoLow||0)+1;else d.yaoLow=0;
   if(d.yaoLow>=3&&chance(.3)){d.status='left';d.endDate=dateStr();d.yaoLow=0;const Y=YAO[d.yao];logD(d,'回万妖山脉去了。');log(`${d.name}回万妖山脉去了。`);G.queue.push({k:'msg',title:'归山',html:`<p class="prose">${fmt(pick(Y.leave),d)}</p>`})}})};
 // 界面：妖族标识
-const _dCard26=dCard;dCard=function(d){let h=_dCard26(d);if(d.yao){h=h.replace(`<div class="dn">${d.name}`,`<div class="dn">${d.name}${yaoBadge(d)}`).replace('class="dcard ','class="dcard yao ')}return h};
+const _dCard26=dCard;dCard=function(d){let h=_dCard26(d);if(d.yao){h=h.replace(`<div class="av">`,`${yaoCorner(d)}<div class="av">`).replace('class="dcard ','class="dcard yao ')}return h};
 const _openRoster26=openRoster;openRoster=function(tab){_openRoster26(tab);document.querySelectorAll('#modal .roster-row').forEach(r=>{const id=+((r.getAttribute('onclick')||'').match(/\d+/)||[])[0];const d=getD(id);if(d&&d.yao){const b=r.querySelector('b');if(b)b.insertAdjacentHTML('beforeend',yaoBadge(d))}})};
 const _openD26=openD;openD=function(id){_openD26(id);const d=getD(id);if(!d||!d.yao)return;const n=document.querySelector('#modal .dhead .dn');if(n&&!n.querySelector('.yao-b'))n.insertAdjacentHTML('beforeend',yaoBadge(d))};
 // 互动台词
