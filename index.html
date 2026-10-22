@@ -6161,7 +6161,7 @@ function qmSweep(id,useYh){const e=G.events.find(x=>x.k==='qingming');const d=ge
 let AUC_MSG='';
 function openAuction(e){const i=e.lots.findIndex(l=>!l.sold);if(i<0){return modal({title:'藏宝阁大促',html:'<p class="prose">今年的拍卖结束了。</p>',btns:[{t:'离开',cls:'pri',fn:()=>{endEvent(e);closeModal()}}]})}const l=e.lots[i],I=itemInfo(l.k);
   modal({title:`藏宝阁大促 · 第${i+1}件`,html:`<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name}${l.n>1?' ×'+l.n:''}</div><div class="ds">${I.desc}</div></div></div>
-   <dl class="kv"><dt>底价</dt><dd>${l.b} 灵玉</dd><dt>当前价</dt><dd><b>${l.price}</b> 灵玉</dd><dt>领先</dt><dd>${l.lead==='you'?'你':l.lead||'暂无'}</dd><dt>你的灵玉</dt><dd>${G.p.jade}</dd></dl>
+   <dl class="kv"><dt>底价</dt><dd>${lotBase(l)} 灵玉</dd><dt>当前价</dt><dd><b>${l.price}</b> 灵玉</dd><dt>领先</dt><dd>${l.lead==='you'?'你':l.lead||'暂无'}</dd><dt>你的灵玉</dt><dd>${G.p.jade}</dd></dl>
    ${AUC_MSG?`<p class="prose">${AUC_MSG}</p>`:''}<p class="hint">出价后若无人跟价即成交；有人跟价可以继续加，也可以放弃。</p>`,
    btns:[{t:'放弃此件',fn:()=>{l.sold=true;AUC_MSG=l.lead&&l.lead!=='you'?`${l.lead}以 ${l.price} 灵玉拍走了${I.name}。`:`${I.name}流拍了。`;openAuction(e)}},{t:`出价 ${Math.round(l.price*1.1)}`,cls:'pri',dis:G.p.jade<Math.round(l.price*1.1),fn:()=>bid(e,l,1.1)},{t:`加价 ${Math.round(l.price*1.3)}`,dis:G.p.jade<Math.round(l.price*1.3),fn:()=>bid(e,l,1.3)}]})}
 function bid(e,l,mul){const I=itemInfo(l.k);l.price=Math.round(l.price*mul);l.lead='you';const p=clamp(1.25-l.price/l.val,0,.85);
@@ -7212,5 +7212,29 @@ function bKpi(cost){return Math.round(cost/50)}
 const _endBuild22=ACT_END.build;
 ACT_END.build=function(days,o){const n0=bBuilt();const r=_endBuild22(days,o);const cost=BCOST[Math.min(n0,7)];const k=bKpi(cost);G.p.kpi+=k;log(`${BLD.find(x=>x.k===o.b).n}落成，宗门KPI +${k}。`);if(r&&r.html)r.html+=`<p class="hint">宗门KPI +${k}</p>`;return r};
 const _simD22=simDisciple;simDisciple=function(d){const m0=d.mood;_simD22(d);if(bActive('lch')&&d.status==='home'&&d.mood<m0){d.mood=m0-(m0-d.mood)*.5;clampD(d)}};
+</script>
+<script>
+// ================= v23：错过中元也会来辞别 / 丹毒显示 / 弟子突破率 =================
+// —— 铭记已满却没赶上中元：另择一夜入梦辞别 ——
+function byeReady(d){return d.status==='dead'&&!d.rbDone&&!d.rebornSched&&(d.memory||0)>=100}
+const _simDay23=simDay;simDay=function(){_simDay23();if(!G||G.over)return;const now=dn(G.date);
+  G.ds.forEach(d=>{if(!byeReady(d)){d.byeDue=null;return}if(G.queue.some(q=>q.k==='zyBye'&&q.id===d.id))return;
+    if(d.byeDue==null){d.byeDue=now+ri(15,60);return}if(now>=d.byeDue){d.byeDue=null;G.queue.push({k:'zyBye',id:d.id,night:true})}})};
+const _zyBye23=EV.zyBye;
+EV.zyBye=e=>{const d=getD(e.id);if(d)d.byeDue=null;if(!e.night)return _zyBye23(e);const _m=modal;modal=function(o){if(o){o.title='入梦·辞别';if(o.html)o.html=o.html.replace(/中元夜，(.+?)来了。/,'这一夜不是中元，$1却入梦来了。')}return _m(o)};try{_zyBye23(e)}finally{modal=_m}};
+// —— 丹毒：药力框 ——
+const _pBuffs23=pBuffs;pBuffs=function(){const o=_pBuffs23();const n=G.p.pillM||0;if(n>0||G.p.toxM)o.push({n:'丹毒',s:G.p.toxM?'攻心':`${n}/50`,d:G.p.toxM?`本月已服丹 ${n} 枚，丹毒攻心：气血被压在两成以下，月初方消`:`本月已服丹 ${n} 枚，超过 50 枚会丹毒攻心（每月初清零）`,bad:G.p.toxM||n>=40});return o};
+const _renderMain23=renderMain;renderMain=function(){_renderMain23();document.querySelectorAll('.pname .buff-ic.buff').forEach(b=>{if(b.textContent.startsWith('丹毒')&&(G.p.toxM||(G.p.pillM||0)>=40))b.classList.add('anger')})};
+// —— 弟子面板：突破率 / 丹毒 ——
+function dBrkInfo(d){if(d.realm>=44)return '已至大乘大圆满';let r=d.realm;while(r<44&&!BREAK[r])r++;if(!BREAK[r])return '—';const[base,name]=BREAK[r];const f=fx(d);let p=base+(f.brk||0);const k=bestPill(d.bag,'pj');const pj=k?PJ[+k.split(':')[2]]:0;
+  return `${r===d.realm?'瓶颈 · ':''}冲击${name} ${Math.round(clamp(p+pj,0,1)*100)}%${pj?`（含囊中${itemInfo(k).name} +${Math.round(pj*100)}%）`:''}`}
+const _openD23=openD;openD=function(id){_openD23(id);const d=getD(id);const kv=document.querySelector('#modal .kv');if(!kv||!d||d.child&&d.age<6)return;const n=d.pillM||0;
+  kv.insertAdjacentHTML('beforeend',`<dt>突破</dt><dd>${dBrkInfo(d)}</dd><dt>丹毒</dt><dd style="${n>=40||d.sick&&n>50?'color:var(--cinnabar)':''}">本月服丹 ${n}/50${n>50?' · 丹毒堆积':''}</dd>`)};
+</script>
+<script>
+// ================= v24：拍卖天阶藏品底价修复 =================
+const LOT_BASE={'f:zqj':8000,'p:hh:3':6000};
+function lotBase(l){if(l.b==null)l.b=LOT_BASE[l.k]!=null?LOT_BASE[l.k]:l.price;return l.b}
+const _genLots24=genLots;genLots=function(){const L=_genLots24();L.forEach(lotBase);return L};
 </script>
 </body></html>
