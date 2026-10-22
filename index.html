@@ -5496,8 +5496,7 @@ const EV={
   ghost:e=>{const d=getD(e.id);if(!d)return nextEvent();const yh=countItem(G.bag,'p:yh:0')>0;
     evModal('中元·入梦',`<p class="prose">中元夜，你梦见了${d.name}。<br>${TA(d)}还是当年的模样，站在洞府的桃树下冲你笑：“师尊，好久不见。”</p>`,[
       opt('与之叙旧',()=>{d.memory+=25;clampD(d);result('你们说了很多话，说到天快亮时，{d}的身影慢慢淡了。“师尊，弟子会记得的。”'+checkReborn(d),d)}),
-      opt('劝'+TA(d)+'早入轮回',()=>{d.memory+=15;clampD(d);let t='{d}点点头，又摇摇头：“弟子还想再看看师尊。”最后还是笑着走了。';if(d.love>=60&&d.memory>=60&&!d.rebornSched){d.memory=Math.max(d.memory,100)}result(t+checkReborn(d),d)}),
-      opt('焚引魂香，留'+TA(d)+'久一些',()=>{removeItem(G.bag,'p:yh:0');d.memory+=50;clampD(d);result('香烟袅袅，梦境格外清晰。你们在桃树下坐了整整一夜。'+checkReborn(d),d)},!yh),
+      opt('焚引魂香，留'+TA(d)+'久一些',()=>{removeItem(G.bag,'p:yh:0');d.memory+=40;clampD(d);result('香烟袅袅，梦境格外清晰。你们在桃树下坐了整整一夜。'+checkReborn(d),d)},!yh),
       opt('惊醒',()=>result('你猛地坐起来，窗外月色如水。枕边有些湿。'))])}
 };
 </script>
@@ -5660,7 +5659,7 @@ function srResolve(type){const S_=SRS(),team=srTeam();const tp=pPower()+team.red
   else if(type==='heart'){ok=chance(clamp(.45+calm,.1,.95));if(ok)txt='你闭目默念清心咒，花香近不了身。';else{const t=team.filter(d=>d.age>=18&&!d.child);if(t.length){const tt=pick(t);addHeart(15,tt);addLove(tt,8);txt=`花香里，你和${tt.name}对视了一眼。谁都没有先移开目光。`}else{txt='花香钻进识海，你想起了一张脸。';const al=aliveDs().filter(d=>d.age>=18&&!d.child).sort((a,b)=>b.crush-a.crush)[0];if(al)addHeart(8,al)}dmg=0}}
   else if(type==='blood'){ok=true;hurtP(15);if(G.over)return;team.forEach(d=>{d.demon+=8;clampD(d)});txt='血阵开启了。同行弟子的眼神有些发红。'}
   else if(type==='illusion'){ok=chance(clamp(.35+calm+G.p.realm/100,.1,.9));txt=ok?'你看破了幻象，眼前豁然开朗。':'你在幻境里迷失了很久，醒来时满脸是泪。';if(!ok){team.forEach(d=>{d.demon+=5;clampD(d)});dmg=.4}}
-  else if(type==='reincarn'){ok=true;const dead=G.ds.filter(d=>d.status==='dead');if(dead.length){const dd=pick(dead);dd.memory+=30;clampD(dd);txt=`井水里映出了${dd.name}的脸。${TA(dd)}冲你笑了笑。`+checkReborn(dd)}else txt='井底映出的，是你自己很多年前的样子。'}
+  else if(type==='reincarn'){ok=true;const dead=G.ds.filter(d=>d.status==='dead'&&!d.rbDone&&!d.rebornSched);if(dead.length){const dd=pick(dead);dd.memory+=80;clampD(dd);const top=aliveDs().filter(x=>x.age>=18&&!x.child).sort((a,b)=>(b.crush||0)-(a.crush||0))[0];if(top)rawCrush(top,8);txt=`井水里映出了${dd.name}的脸。${TA(dd)}冲你笑了笑。<br>你的心口一阵发紧，久久没能平复。${top?'（动心 +8）':''}`+checkReborn(dd)}else txt='井底映出的，是你自己很多年前的样子。'}
   let lines=[txt];
   if(ok){const got=srLoot(mult);if(got.length)lines.push('获得：'+got.join('、'));team.forEach(d=>addDXP(d,needXP(d.realm)*.06))}
   else if(dmg>0){const m=Math.max(1,ratio);team.forEach(d=>{if(d.status!=='home')return;if(chance(.55*dmg)){hurtD(d,ri(15,35)*dmg*m);if(d.status==='dead')lines.push(`<b style="color:var(--cinnabar)">${d.name}死在了秘境里。</b>`);else lines.push(`${d.name}受了伤（气血${Math.round(hpPct(d)*100)}%）。`)}});hurtP(Math.round(ri(15,35)*dmg*m));if(G.over)return;lines.push(`你的气血：${Math.floor(hpOf(G.p))}/${hpMax(G.p)}`)}
@@ -6122,7 +6121,7 @@ function runTourney(e){e.done=true;endEvent(e);const ds=presentDs();let kpi=0;co
     else if(score>base*1.15){kpi+=5;addItem(d.bag,'p:jq:1');t='跻身前十，得玄品聚气丹';d.mood+=6}
     else if(score>base*.75){t='名列中游';d.mood-=2}
     else{kpi-=4;t='首轮即败，垫底';d.mood-=10}clampD(d);logD(d,`宗门大比：${t}。`);return `<li><b>${d.name}</b>：${t}</li>`});
-  let prow='';if(TJOIN){const sc=pPower()*(.85+R()*.35),eb=basePow(20+G.p.rank*2.2);if(sc>eb*1.5){kpi+=12;const k=randFaqi(Math.min(3,rollGrade(G.p.realm)+1));addItem(G.bag,k);G.p.jade+=300;prow=`你力压群雄，夺得长老组魁首！得${itemInfo(k).name}与灵玉300。`;unlock('champion');homeDs().forEach(d=>{d.favor+=3;clampD(d)})}else if(sc>eb*1.1){kpi+=6;G.p.jade+=120;prow='你位列长老组三甲，得灵玉120。'}else if(sc>eb*.8){prow='你在长老组中规中矩。'}else{kpi-=5;prow='你在长老组首轮落败，颜面扫地。';homeDs().forEach(d=>{d.mood-=3;clampD(d)})}}
+  let prow='';if(TJOIN){const sc=pPower()*(.85+R()*.35),eb=basePow(21+G.p.rank*2.4)*tyEF();if(sc>eb*1.5){kpi+=12;const k=randFaqi(Math.min(3,rollGrade(G.p.realm)+1));addItem(G.bag,k);G.p.jade+=300;prow=`你力压群雄，夺得长老组魁首！得${itemInfo(k).name}与灵玉300。`;unlock('champion');homeDs().forEach(d=>{d.favor+=3;clampD(d)})}else if(sc>eb*1.1){kpi+=6;G.p.jade+=120;prow='你位列长老组三甲，得灵玉120。'}else if(sc>eb*.8){prow='你在长老组中规中矩。'}else{kpi-=5;prow='你在长老组首轮落败，颜面扫地。';homeDs().forEach(d=>{d.mood-=3;clampD(d)})}}
   G.p.kpi+=kpi;log(`宗门大比结束，KPI ${kpi>=0?'+':''}${kpi}。`);modal({title:'大比结果',html:`<ul class="dlog" style="max-height:none;font-size:14px">${rows.join('')||'<li>门下无人参赛</li>'}</ul>${prow?`<p class="prose">${prow}</p>`:''}<p class="hint">宗门KPI ${kpi>=0?'+':''}${kpi}</p>`,btns:[{t:'知道了',cls:'pri',fn:closeModal}]})}
 // 新春
 const RP=[0,66,188,666,1888];
@@ -6827,12 +6826,12 @@ EV.naming=e=>{const d=getD(e.id);if(!d||d.status!=='home')return nextEvent();
 const TIER_N=['魁首','甲等','乙等','丙等','不入流'];
 function rankField(entries,T){entries.forEach(x=>{x.tier=x.score>=T[1]?1:x.score>=T[2]?2:x.score>=T[3]?3:4});const el=entries.filter(x=>x.score>=T[0]).sort((a,b)=>(b.realm-a.realm)||(b.score-a.score));if(el.length)el[0].tier=0;return el[0]||null}
 function tourneyDisciples(ds){const wt=ds.filter(d=>d.realm>=TOURNEY_CAP);ds=ds.filter(d=>d.realm<TOURNEY_CAP);const r=tourneyDisciples0(ds);wt.forEach(d=>{logD(d,'宗门大比：修为已至元婴，不再参加弟子组，在看台观战。');r.rows.push(`<li><b>${d.name}</b>：修为过高（${REALMS[d.realm]}），不宜参赛，在看台观战</li>`)});return r}
-function tourneyDisciples0(ds){let kpi=0;const T=[basePow(17),basePow(13),basePow(8),basePow(4)];ds.forEach(dUseSw);const en=ds.map(d=>({d,realm:d.realm,score:dPower(d)*(.85+R()*.3)}));rankField(en,T);
+function tourneyDisciples0(ds){let kpi=0;const T=tyLines();ds.forEach(dUseSw);const en=ds.map(d=>({d,realm:d.realm,score:dPower(d)*(.85+R()*.3)}));rankField(en,T);
   const rows=en.map(({d,tier})=>{let t;if(tier===0){kpi+=12;const k=randFaqi(Math.min(3,rollGrade(G.p.realm)+1));addItem(d.bag,k);t=`夺得魁首！宗门赏${itemInfo(k).name}`;d.mood+=15;d.favor+=5;unlock('dchamp')}
     else if(tier===1){kpi+=5;addItem(d.bag,'p:jq:1');t='甲等，得玄品聚气丹';d.mood+=8}else if(tier===2){kpi+=2;t='乙等';d.mood+=2}else if(tier===3){t='丙等';d.mood-=2}else{kpi-=4;t='不入流，首轮即败';d.mood-=10}
     clampD(d);logD(d,`宗门大比：${t}。`);return `<li><b>${d.name}</b>：${t}</li>`});return{rows,kpi}}
 runTourney=function(e){e.done=true;endEvent(e);const ds=presentDs().filter(d=>!(d.child&&d.age<6));const r=tourneyDisciples(ds);let kpi=r.kpi;
-  let prow='';if(TJOIN){const sc=pPower()*(.85+R()*.35),eb=basePow(20+G.p.rank*2.2);if(sc>eb*1.5){kpi+=12;const k=randFaqi(Math.min(3,rollGrade(G.p.realm)+1));addItem(G.bag,k);G.p.jade+=300;prow=`你力压群雄，夺得长老组魁首！得${itemInfo(k).name}与灵玉300。`;unlock('champion');homeDs().forEach(d=>{d.favor+=3;clampD(d)})}else if(sc>eb*1.1){kpi+=6;G.p.jade+=120;prow='你位列长老组甲等，得灵玉120。'}else if(sc>eb*.8){prow='你在长老组中规中矩，位列乙等。'}else{kpi-=5;prow='你在长老组首轮落败，颜面扫地。';homeDs().forEach(d=>{d.mood-=3;clampD(d)})}}
+  let prow='';if(TJOIN){const sc=pPower()*(.85+R()*.35),eb=basePow(21+G.p.rank*2.4)*tyEF();if(sc>eb*1.5){kpi+=12;const k=randFaqi(Math.min(3,rollGrade(G.p.realm)+1));addItem(G.bag,k);G.p.jade+=300;prow=`你力压群雄，夺得长老组魁首！得${itemInfo(k).name}与灵玉300。`;unlock('champion');homeDs().forEach(d=>{d.favor+=3;clampD(d)})}else if(sc>eb*1.1){kpi+=6;G.p.jade+=120;prow='你位列长老组甲等，得灵玉120。'}else if(sc>eb*.8){prow='你在长老组中规中矩，位列乙等。'}else{kpi-=5;prow='你在长老组首轮落败，颜面扫地。';homeDs().forEach(d=>{d.mood-=3;clampD(d)})}}
   G.p.kpi+=kpi;log(`宗门大比结束，KPI ${kpi>=0?'+':''}${kpi}。`);modal({title:'大比结果',html:`<p class="hint">弟子组：魁首仅一人；其后依次为甲等、乙等、丙等、不入流。</p><ul class="dlog" style="max-height:none;font-size:14px">${r.rows.join('')||'<li>门下无人参赛</li>'}</ul>${prow?`<p class="prose">${prow}</p>`:''}<p class="hint">宗门KPI ${kpi>=0?'+':''}${kpi}</p>`,btns:[{t:'知道了',cls:'pri',fn:closeModal}]})};
 // —— 仙门大比：五年一届，105年5月1日起 ——
 let XJOIN=true;
@@ -7082,7 +7081,7 @@ openQingming=function(e){const dead=G.ds.filter(d=>d.status==='dead'&&!d.rbDone)
    ${dead.some(d=>d.guilt)?'<p class="hint">祭扫可消解愧疚：普通祭扫 -1 层，焚引魂香 -2 层。</p>':''}</div>`,
    btns:[{t:'离开',cls:'pri',fn:closeModal}]})};
 qmSweep=function(id,useYh){const e=G.events.find(x=>x.k==='qingming');const d=getD(id);if(!e||!d||(e.swept||{})[id])return;if(useYh&&!removeItem(G.bag,'p:yh:0'))return;e.swept[id]=true;const gone=!!d.rebornSched;
-  if(!gone){d.memory=(d.memory||0)+(useYh?50:20);clampD(d)}
+  if(!gone){d.memory=(d.memory||0)+(useYh?30:20);clampD(d)}
   const g0=d.guilt||0,cut=Math.min(g0,useYh?2:1);d.guilt=g0-cut;if(g0>0&&d.guilt===0)unlock('guiltclear');log(`清明，为${d.name}扫墓。`);
   const body=gone?`你拂去碑上的落叶，摆上一碟${d.name}生前爱吃的点心。${useYh?'引魂香的烟直直地升上去，没有一丝停留。':''}<br>坟前很静。你忽然明白，${d.name}已经不在这里了——${TA(d)}去了很远的地方。是放下了，还是放不下，要换一条路回来，你不知道。`
     :`你拂去碑上的落叶，摆上一碟${d.name}生前爱吃的点心。${useYh?'引魂香的烟气袅袅升起，久久不散。':''}${checkReborn(d)}`;
@@ -7186,9 +7185,9 @@ EV.zyBye=e=>{const d=getD(e.id);if(!d||d.status!=='dead'||d.rbDone||d.rebornSche
     modal({title:'中元·辞别',x:false,html:`<p class="prose">中元夜，${d.name}来了。和往年不一样，${TA(d)}看起来很轻松。<br><br>${fmt(pick(ZY_BYE[d.mbti]||ZY_BYE.ISFJ),d)}<br><br>${TA(d)}笑了笑，转身走进夜色里。这一次，你知道${TA(d)}不会再来了。</p><p class="hint">${d.name}放下了，你也该放下了。${g0?`对${TA(d)}的愧疚（${g0} 层），随之散去。`:''}</p>`,btns:[{t:'目送',cls:'pri',fn:closeModal}]})}};
 ACH.zybye={n:'放下',d:'有陨落的弟子在中元夜来辞别，劝你放下'};
 // ---------- 3. 有道侣者对师尊的爱恋清空且不再增长 ----------
-const _addLove22=addLove;addLove=function(d,v){if(d&&d.partner){d.love=0;return}return _addLove22(d,v)};
-const _clampD22=clampD;clampD=function(d){_clampD22(d);if(d&&d.partner&&d.love>0)d.love=0};
-const _simDay22=simDay;simDay=function(){_simDay22();if(!G||G.over)return;G.ds.forEach(d=>{if(d.partner&&d.love>0)d.love=0});
+const _addLove22=addLove;addLove=function(d,v){if(d&&(d.partner||d.spouse)){d.love=0;return}return _addLove22(d,v)};
+const _clampD22=clampD;clampD=function(d){_clampD22(d);if(d&&(d.partner||d.spouse)&&d.love>0)d.love=0};
+const _simDay22=simDay;simDay=function(){_simDay22();if(!G||G.over)return;G.ds.forEach(d=>{if((d.partner||d.spouse)&&d.love>0)d.love=0});
   if(bActive('jjg')&&chance(.04)){const ps=presentDs().filter(d=>!(d.child&&d.age<6)&&!d.sick);if(ps.length>=2){const s=ps.sort(()=>R()-.5),a=s[0],b=s[1];const t=pick(['在讲经阁和{b}共读一卷古籍，互相讲了一下午','和{b}在讲经阁为一句心法争了半天，最后都有所得','拉着{b}去讲经阁抄经，抄着抄着都睡着了','在讲经阁替{b}讲解剑谱','和{b}在讲经阁对坐论道，越聊越投缘']);
     a.notes.push(t.replace('{b}',sibName(a,b)));b.notes.push(t.replace('{b}',sibName(b,a)).replace(/^在讲经阁替(.+)讲解剑谱$/,'在讲经阁听$1讲解剑谱'));addRel(a,b,3);addDXP(a,gainD(a)*.5);addDXP(b,gainD(b)*.5);a.mood+=2;b.mood+=2;clampD(a);clampD(b)}
    else if(ps.length===1&&chance(.5)){ps[0].notes.push('独自在讲经阁读了一整天书');addDXP(ps[0],gainD(ps[0])*.5)}}};
@@ -7236,5 +7235,55 @@ const _openD23=openD;openD=function(id){_openD23(id);const d=getD(id);const kv=d
 const LOT_BASE={'f:zqj':8000,'p:hh:3':6000};
 function lotBase(l){if(l.b==null)l.b=LOT_BASE[l.k]!=null?LOT_BASE[l.k]:l.price;return l.b}
 const _genLots24=genLots;genLots=function(){const L=_genLots24();L.forEach(lotBase);return L};
+</script>
+<script>
+// ================= v25：道侣剧情过滤 / 一键回信 / 大比加难 / 心魔来源 / 弟子不重名 =================
+// ---------- 1. 婚恋剧情 ----------
+const isWed=d=>!!(d&&(d.partner||d.spouse));
+const WED_RX=/提亲|说亲|定了一门亲事|婚约|婚事提议|一桩婚事|结道侣|结为道侣|要成亲了|道侣大典/,WED_NOT=/看上您|二师姐要成亲/,WED_FORCE=/要成亲了|道侣大典|订了婚约/;
+const SPOUSE_RX=/的道侣中了|道侣遇险|救我道侣/;
+const REFUSE_RX=/拒|不予|回绝|推辞|推了|别应|不应|不嫁|不娶|退了|算了|不许|不必|再等等|留在峰上|别答应|不答应/;
+function romKind(t){const q=t&&t.q||'';if(SPOUSE_RX.test(q))return 'sp';if(WED_RX.test(q)&&!WED_NOT.test(q))return 'wed';return ''}
+const _condOK25=condOK;
+condOK=function(t,d,sib){if(!_condOK25(t,d,sib))return false;const k=romKind(t);if(!k||!d)return true;
+  if((d.love||0)>=50||d.partner)return false;if(k==='wed'&&d.spouse)return false;return true};
+function wedOutsider(d){if(isWed(d))return '';const g=d.gender==='m'?'f':d.gender==='f'?'m':(chance(.5)?'m':'f');const pool=g==='m'?NM_M:NM_F;let n='';for(let i=0;i<50;i++){n=pick(SUR)+pick(pool);if(!G.ds.some(o=>o.name===n))break}
+  d.spouse=n;d.love=0;clampD(d);logD(d,`与${n}结为道侣。`);log(`${d.name}与${n}结为道侣。`);return n}
+const _greq25=EV.greq;
+EV.greq=e=>{const P=(GREQ[e.pool]||[])[e.i];const d=getD(e.id);const k=romKind(P);if(!k||!d)return _greq25(e);
+  if((d.love||0)>=50||d.partner||(k==='wed'&&d.spouse))return nextEvent();
+  const _ev=evModal;evModal=function(title,html,os){os=os.map((o,i)=>({...o,fn:()=>{const po=P.o[i]||{};const refuse=k==='wed'&&!WED_FORCE.test(P.q)&&REFUSE_RX.test(po.t||'');const n=refuse?'':wedOutsider(d);o.fn();if(n)setTimeout(()=>toast(`${d.name}与${n}结为道侣`),60)}}));return _ev(title,html,os)};
+  try{_greq25(e)}finally{evModal=_ev}};
+function wedRow(d){return d&&d.spouse&&!d.partner?`<dt>道侣</dt><dd>${d.spouse}（宗外）</dd>`:''}
+const _openD25=openD;openD=function(id){_openD25(id);const kv=document.querySelector('#modal .kv');const h=wedRow(getD(id));if(kv&&h)kv.insertAdjacentHTML('beforeend',h)};
+const _openAlum25=openAlum;openAlum=function(id){_openAlum25(id);const d=getD(id);if(d&&d.status==='home')return;const kv=document.querySelector('#modal .kv');const h=wedRow(d);if(kv&&h)kv.insertAdjacentHTML('beforeend',h)};
+// ---------- 2. 一键回信 ----------
+function replyAll(warm){const ms=G.mail.filter(m=>m.did&&!m.replied);ms.forEach(m=>replyMail(m.id,warm));toast(`已${warm?'温情':'公事公办地'}回复 ${ms.length} 封信`);openMail()}
+const _openMail25=openMail;openMail=function(){_openMail25();const n=G.mail.filter(m=>m.did&&!m.replied).length;if(!n)return;const h=document.querySelector('#modal .hint');if(h)h.insertAdjacentHTML('afterend',`<div class="blk"><h4>一键回复 · ${n} 封未回</h4><div class="goals"><button onclick="replyAll(true)">全部温情回信</button><button onclick="replyAll(false)">全部公事公办</button></div></div>`)};
+// ---------- 3. 宗门大比门槛（每年浮动） ----------
+function tyYear(){if(G.tyY!==G.date.y){G.tyY=G.date.y;G.tyF=.9+R()*.2;G.tyEF=.93+R()*.14}}
+function tyLines(){tyYear();return [18,15,12,8].map(r=>basePow(r)*G.tyF)}
+function tyEF(){tyYear();return G.tyEF}
+const _openTourney25=openTourney;openTourney=function(e){_openTourney25(e);tyYear();const p=document.querySelector('#modal .prose');const f=G.tyF>1.04?'今年高手云集，门槛偏高':G.tyF<.96?'今年报名者平平，门槛偏低':'今年门槛与往年相当';
+  if(p)p.insertAdjacentHTML('afterend',`<p class="hint">弟子组门槛：魁首约需金丹小圆满，甲等金丹，乙等筑基中期，丙等练气八阶。${f}。</p>`)};
+// ---------- 5. 心魔来源 ----------
+const careNow=d=>{d.lastCared=dn(G.date);d.snub=0};
+const _interact25=interact;interact=function(id,act){const d=getD(id);const ap=apLeft();const r=_interact25(id,act);
+  if(d&&G&&!G.over&&apLeft()<ap){careNow(d);const now=dn(G.date);presentDs().forEach(o=>{if(o===d||(o.child&&o.age<6))return;if(o.lastCared==null)o.lastCared=now;if(now-o.lastCared<10)return;o.snub=(o.snub||0)+1;
+    if(o.snub>=5){const T=MB[o.mbti];const v=Math.round(3*(T.jea||1)*(T.dark||1)*(fx(o).demon||1));o.demon+=v;o.mood-=5;o.snub=2;o.notes.push(`师尊总在找${sibName(o,d)}他们，从不来找自己，觉得自己被孤立了`);clampD(o)}})}return r};
+const _endTeach25=ACT_END.teach;ACT_END.teach=function(days,o){presentDs().forEach(careNow);return _endTeach25(days,o)};
+const _endExp25=ACT_END.explore;ACT_END.explore=function(days,o){const r=_endExp25(days,o);((o&&o.team)||[]).forEach(id=>{const d=getD(id);if(d)careNow(d)});return r};
+const _endFeast25=endFeast;endFeast=function(){if(G)homeDs().forEach(careNow);return _endFeast25()};
+const _doInvite25=doInvite;doInvite=function(d,inv,all){careNow(d);if(all)presentDs().forEach(careNow);return _doInvite25(d,inv,all)};
+const _dDaily25=dDaily;dDaily=function(d){const r=_dDaily25(d);if(!r||!G||G.over||d.status!=='home'||d.away>0||(d.child&&d.age<6))return r;
+  const now=dn(G.date),T=MB[d.mbti]||{},dm=(T.dark||1)*(fx(d).demon||1);if(d.lastCared==null)d.lastCared=now;
+  const days=now-d.lastCared;if(days>20){const s=clamp(1.3-(T.ind||.5),.2,1.1);if(chance(Math.min(.12,(days-20)/500)*s)){d.demon+=dm;if(days>60&&chance(.1))d.notes.push(`师尊已经${Math.floor(days/30)}个多月没管过自己了`)}}
+  const sib=homeDs().filter(o=>o!==d&&!(o.child&&o.age<6));if(sib.length){const avg=sib.reduce((a,o)=>a+getRel(d,o),0)/sib.length;if(avg<-15&&chance(Math.min(.08,(-avg-15)/400))){d.demon+=dm;if(chance(.15))d.notes.push('在师门里没有一个说得上话的人')}}
+  clampD(d);return r};
+// ---------- 6. 弟子不重名 ----------
+function nameTaken(n){if(!G)return false;if(G.ds.some(o=>o.name===n||o.pastName===n))return true;return G.events.some(e=>(e.cands||[]).some(c=>c.name===n))||G.queue.some(q=>q.cand&&q.cand.name===n)}
+const _genD25=genDisciple;genDisciple=function(){const c=_genD25();if(!G)return c;const pool=c.gender==='m'?NM_M:c.gender==='f'?NM_F:[...NM_M,...NM_F];
+  for(let i=0;i<200&&nameTaken(c.name);i++){c.given=pick(pool);c.name=pick(SUR)+c.given}return c};
+const _openRecruit25=openRecruit;openRecruit=function(e){if(e&&!e.cands){e.cands=[];for(let i=0;i<10;i++)e.cands.push(genDisciple())}return _openRecruit25(e)};
 </script>
 </body></html>
