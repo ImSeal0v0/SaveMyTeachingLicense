@@ -5359,7 +5359,7 @@ function setGoal(id,g){const d=getD(id);const mk=G.date.y*12+G.date.m;if(d.goalM
   clampD(d);logD(d,`师尊定下本月目标：${GOALS[g].n}。`);save();openD(id);if(r)toast(r)}
 function tryGraduate(id){const d=getD(id);if(d.realm<20)return;if(d.age>=18&&d.love>=55&&chance(Math.min(.9,d.love/100))){hideModal();G.queue.unshift({k:'clingy',id});nextEvent();return}hideModal();graduate(d);nextEvent()}
 function pickCareer(d){const pref=CAREER_PREF[MB[d.mbti].g];return chance(.6)?pick(pref):ri(0,CAREERS.length-1)}
-function graduate(d){d.status='grad';d.career=pickCareer(d);d.endDate=dateStr();d.lastContact=dn(G.date);G.stats.grads++;const gain=30+(d.realm-20)*3;G.p.kpi+=gain;logD(d,`出师，去做了${CAREERS[d.career].n}。`);log(`${d.name}出师了！KPI +${gain}。`);
+function graduate(d){d.status='grad';d.career=pickCareer(d);d.endDate=dateStr();d.lastContact=dn(G.date);G.stats.grads++;const gain=30+Math.max(0,d.realm-20)*6+(d.realm>=25?40:0)+(d.realm>=30?80:0)+(d.realm>=35?150:0);G.p.kpi+=gain;logD(d,`出师，去做了${CAREERS[d.career].n}。`);log(`${d.name}出师了！KPI +${gain}。`);
   G.queue.unshift({k:'msg',title:'出师',html:`<div class="prose"><p>${d.name}向你行了三拜九叩的大礼。</p><p>“弟子此去，${pick(['山高水远','天涯海角','不知归期'])}。师尊保重。”</p><p>${TA(d)}打算去做——<b>${CAREERS[d.career].n}</b>。</p></div><p class="hint">宗门KPI +${gain}。${TA(d)}永远是门中的${seniorTitle(d)}，会在师门表里继续书写自己的故事，偶尔来信、回来看你。</p>`})}
 function expel(id,ok){const d=getD(id);if(!ok){modal({title:'逐出师门',html:`<div class="confirm-box"><p>确定将 <b>${d.name}</b> 逐出师门吗？此举无法挽回，宗门KPI -5，${TA(d)}也未必会善罢甘休。</p></div>`,btns:[{t:'再想想',fn:()=>openD(id)},{t:'逐出',cls:'redf',fn:()=>expel(id,true)}]});return}
   doExpel(d);hideModal();G.queue.unshift({k:'msg',title:'逐出师门',html:`<p class="prose">${d.name}背着行囊下了山，始终没有回头。</p>`});nextEvent()}
@@ -6560,8 +6560,8 @@ function askReturn(d){const ad=d.age>=18&&!d.child;let P=RET_ASK[d.mbti];if(ad&&
       modal({title:'重回师门',x:false,html:`<p class="prose">${d.name}跪在你面前，额头抵着地面，很久都没有起来。<br>“弟子……回来了。”</p><p class="hint">将叛逃弟子重收门下，宗门上下议论纷纷，你的威信受到影响（宗门KPI -40）。</p>`,btns:[{t:'起来吧',cls:'pri',fn:back}]})}}]})}
 // —— 爱恋师尊的弟子不再与同门发展感情 ——
 const _addRel15=addRel;
-addRel=function(a,b,v){if(!a||!b||a===b||v<=0||isKin(a,b))return _addRel15(a,b,v);const lp=x=>x.age>=18&&!x.child&&x.love>=60;if(!lp(a)&&!lp(b))return _addRel15(a,b,v);
-  const cur=getRel(a,b);if(cur>=79)return;_addRel15(a,b,v);const k=relKey(a,b);if(G.rel[k]>79)G.rel[k]=79};
+addRel=function(a,b,v){if(!a||!b||a===b||v<=0||isKin(a,b))return _addRel15(a,b,v);const lp=x=>x.age>=18&&!x.child&&x.love>=50;if(!lp(a)&&!lp(b))return _addRel15(a,b,v);
+  const cur=getRel(a,b);if(cur>=65)return;_addRel15(a,b,v);const k=relKey(a,b);if(G.rel[k]>65)G.rel[k]=65};
 </script>
 <script>
 // ================= v16：徒弟结局图鉴 / 新成就 =================
@@ -6663,23 +6663,23 @@ doInvite=function(d,inv,all){const k=isE(d)?.75:1.3;const e={};for(const x in in
 function inviteRefuse(d){const T=MB[d.mbti];if(isE(d)){d.mood-=4;d.favor-=1}else{d.mood-=10;d.favor-=5;d.demon+=4*T.dark}if(T.refuse==='hurt')d.demon+=2;logD(d,'鼓起勇气邀请师尊，被婉拒了。')}
 // —— 洞府营造 ——
 const BLD=[
- {k:'zt',n:'正厅',d:'宗门KPI 获得效率 +10%',s:`<rect width="160" height="100" fill="#cfe3ea"/><rect y="78" width="160" height="22" fill="#c9b48a"/><rect x="30" y="52" width="100" height="28" fill="#efe3c8"/><rect x="38" y="52" width="5" height="28" fill="#a3302a"/><rect x="58" y="52" width="5" height="28" fill="#a3302a"/><rect x="97" y="52" width="5" height="28" fill="#a3302a"/><rect x="117" y="52" width="5" height="28" fill="#a3302a"/><path d="M14 54 Q24 50 30 40 L130 40 Q136 50 146 54 Z" fill="#33414f"/><path d="M40 40 L80 22 L120 40 Z" fill="#3e4e5e"/><rect x="68" y="43" width="24" height="7" fill="#c9a24a"/><rect x="70" y="62" width="20" height="18" fill="#7a4a2a"/><rect x="24" y="80" width="112" height="4" fill="#b8a27a"/>`},
- {k:'ns',n:'内室',d:'闭关修为 +10%',s:`<rect width="160" height="100" fill="#e9dcc3"/><rect y="80" width="160" height="20" fill="#9c7a55"/><circle cx="50" cy="42" r="24" fill="#cfe0e6" stroke="#7a5a3a" stroke-width="3"/><path d="M26 42 H74 M50 18 V66 M33 25 L67 59 M67 25 L33 59" stroke="#7a5a3a" stroke-width="1.5"/><rect x="92" y="40" width="50" height="40" fill="#b8574a"/><rect x="92" y="34" width="50" height="8" fill="#8a3d33"/><rect x="96" y="44" width="42" height="30" fill="#f0e2c4"/><rect x="66" y="70" width="12" height="10" fill="#6a5a3a"/><path d="M72 68 C66 60 78 54 72 46 C66 38 76 32 72 26" stroke="#9aa" stroke-width="1.5" fill="none"/>`},
- {k:'jjg',n:'讲经阁',d:'开坛授课效果 +25%',s:`<rect width="160" height="100" fill="#d8e6d8"/><rect y="82" width="160" height="18" fill="#b9a780"/><rect x="45" y="58" width="70" height="24" fill="#efe3c8"/><path d="M30 60 Q40 56 45 48 L115 48 Q120 56 130 60 Z" fill="#2f5a4a"/><rect x="55" y="34" width="50" height="14" fill="#efe3c8"/><path d="M42 36 Q50 32 55 24 L105 24 Q110 32 118 36 Z" fill="#2f5a4a"/><path d="M68 24 L80 12 L92 24 Z" fill="#244a3c"/><rect x="52" y="62" width="56" height="16" fill="#8a5a3a"/><rect x="55" y="64" width="4" height="12" fill="#d8b46a"/><rect x="61" y="64" width="4" height="12" fill="#a3302a"/><rect x="67" y="64" width="4" height="12" fill="#4a6a8a"/><rect x="73" y="64" width="4" height="12" fill="#d8b46a"/><rect x="88" y="64" width="16" height="12" fill="#f3ecd8"/>`},
- {k:'snt',n:'神农堂',d:'弟子病愈更快、伤势恢复加快，玩家气血恢复变快',s:`<rect width="160" height="100" fill="#e3ecd6"/><rect y="80" width="160" height="20" fill="#a9935f"/><rect x="40" y="50" width="80" height="30" fill="#f2e8cf"/><path d="M26 52 Q36 48 40 40 L120 40 Q124 48 134 52 Z" fill="#3f6b3a"/><rect x="72" y="60" width="16" height="20" fill="#6e4a2a"/><circle cx="52" cy="62" r="6" fill="#c9a24a"/><circle cx="52" cy="54" r="4" fill="#c9a24a"/><path d="M52 50 V46" stroke="#6e4a2a" stroke-width="2"/><rect x="128" y="58" width="2" height="22" fill="#6e4a2a"/><rect x="146" y="58" width="2" height="22" fill="#6e4a2a"/><rect x="126" y="58" width="24" height="2" fill="#6e4a2a"/><circle cx="133" cy="66" r="3" fill="#7aa35a"/><circle cx="141" cy="66" r="3" fill="#b85a4a"/><circle cx="137" cy="73" r="3" fill="#7aa35a"/><ellipse cx="20" cy="82" rx="9" ry="4" fill="#7a6a5a"/>`},
- {k:'jxh',n:'静心湖',d:'弟子心魔增长 -10%，玩家心动增长 -10%',s:`<defs><linearGradient id="jxs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b4e7a"/><stop offset="1" stop-color="#d9a98a"/></linearGradient></defs><rect width="160" height="62" fill="url(#jxs)"/><circle cx="118" cy="20" r="9" fill="#f7efd2"/><path d="M0 62 L30 36 L52 54 L80 30 L112 58 L140 40 L160 52 V62 Z" fill="#4a5a6a"/><rect y="62" width="160" height="38" fill="#4f7a9a"/><path d="M110 70 H126 M106 76 H130 M114 82 H122" stroke="#f7efd2" stroke-width="1.5" opacity=".7"/><path d="M50 84 Q62 90 74 84 Z" fill="#6e4a2a"/><path d="M62 84 V74 L70 82" stroke="#6e4a2a" stroke-width="1.5" fill="#efe3c8"/><path d="M12 62 C14 48 22 40 30 36" stroke="#5a4a3a" stroke-width="3" fill="none"/><path d="M24 40 C20 52 18 60 20 70 M28 38 C26 50 26 60 28 72 M32 38 C32 50 34 58 36 68" stroke="#6a9a5a" stroke-width="1.5" fill="none"/>`},
- {k:'ywt',n:'演武台',d:'全师门战力 +10%，弟子们会不时在台上切磋，可能长进、结仇或受伤',s:`<rect width="160" height="100" fill="#d6e2ee"/><path d="M0 60 L40 40 L70 56 L110 34 L160 58 V70 H0 Z" fill="#8fa3b5"/><rect y="70" width="160" height="30" fill="#b9a780"/><ellipse cx="80" cy="76" rx="56" ry="12" fill="#9a9488"/><ellipse cx="80" cy="73" rx="56" ry="12" fill="#c8c0b0"/><rect x="18" y="34" width="2" height="42" fill="#5a4a3a"/><path d="M20 34 H38 L34 40 L38 46 H20 Z" fill="#a3302a"/><rect x="140" y="34" width="2" height="42" fill="#5a4a3a"/><path d="M142 34 H160 L156 40 L160 46 H142 Z" fill="#a3302a"/><path d="M66 70 L72 50 M94 70 L88 50" stroke="#5a4a3a" stroke-width="2"/><path d="M72 50 L70 44 L74 44 Z M88 50 L86 44 L90 44 Z" fill="#c0c8d0"/><circle cx="66" cy="62" r="3" fill="#33414f"/><circle cx="94" cy="62" r="3" fill="#33414f"/>`},
- {k:'zhl',n:'真火丹炉',d:'炼丹成功率 +10%',s:`<rect width="160" height="100" fill="#2e2a2a"/><rect y="82" width="160" height="18" fill="#4a3a30"/><path d="M58 82 L54 92 M102 82 L106 92 M80 84 V94" stroke="#8a6a3a" stroke-width="4"/><path d="M46 50 Q46 86 80 86 Q114 86 114 50 Z" fill="#b8863a"/><rect x="42" y="44" width="76" height="8" rx="3" fill="#d8a64a"/><path d="M40 48 Q32 48 34 58 M120 48 Q128 48 126 58" stroke="#d8a64a" stroke-width="4" fill="none"/><rect x="74" y="58" width="12" height="12" fill="#7a5a2a"/><path d="M60 92 Q66 78 72 92 Q78 72 84 92 Q90 80 98 92 Z" fill="#f08a2a"/><path d="M68 92 Q74 82 80 92 Q86 84 92 92 Z" fill="#f8d24a"/><path d="M70 40 C64 30 76 24 70 14 M90 40 C96 30 84 24 90 14" stroke="#776" stroke-width="2" fill="none" opacity=".7"/>`},
- {k:'lch',n:'灵草花园',d:'弟子平时心情略微增高，不那么容易失落',s:`<rect width="160" height="100" fill="#dcebe0"/><rect y="40" width="160" height="40" fill="#f2efe6"/><path d="M0 40 H160" stroke="#3b4a5a" stroke-width="4"/><circle cx="118" cy="62" r="16" fill="#9dc79a"/><path d="M102 62 A16 16 0 0 1 134 62" stroke="#3b4a5a" stroke-width="2" fill="none"/><rect y="80" width="160" height="20" fill="#9cc0b0"/><path d="M40 88 Q60 70 80 88" stroke="#a3302a" stroke-width="3" fill="none"/><path d="M14 80 L20 58 L28 64 L34 52 L40 80 Z" fill="#9a9a9a"/><path d="M144 80 V44 M150 80 V48 M138 80 V50" stroke="#5a8a4a" stroke-width="2"/><circle cx="56" cy="76" r="3" fill="#e88aa8"/><circle cx="62" cy="74" r="3" fill="#f2b8c8"/><circle cx="90" cy="76" r="3" fill="#e88aa8"/><circle cx="96" cy="78" r="2.5" fill="#f2d24a"/><circle cx="10" cy="88" r="3" fill="#e88aa8"/>`}];
+ {k:'zt',n:'正厅',d:'宗门KPI：所有KPI收益 +30%',s:`<rect width="160" height="100" fill="#cfe3ea"/><rect y="78" width="160" height="22" fill="#c9b48a"/><rect x="30" y="52" width="100" height="28" fill="#efe3c8"/><rect x="38" y="52" width="5" height="28" fill="#a3302a"/><rect x="58" y="52" width="5" height="28" fill="#a3302a"/><rect x="97" y="52" width="5" height="28" fill="#a3302a"/><rect x="117" y="52" width="5" height="28" fill="#a3302a"/><path d="M14 54 Q24 50 30 40 L130 40 Q136 50 146 54 Z" fill="#33414f"/><path d="M40 40 L80 22 L120 40 Z" fill="#3e4e5e"/><rect x="68" y="43" width="24" height="7" fill="#c9a24a"/><rect x="70" y="62" width="20" height="18" fill="#7a4a2a"/><rect x="24" y="80" width="112" height="4" fill="#b8a27a"/>`},
+ {k:'ns',n:'内室',d:'修行：闭关所得修为 +20%',s:`<rect width="160" height="100" fill="#e9dcc3"/><rect y="80" width="160" height="20" fill="#9c7a55"/><circle cx="50" cy="42" r="24" fill="#cfe0e6" stroke="#7a5a3a" stroke-width="3"/><path d="M26 42 H74 M50 18 V66 M33 25 L67 59 M67 25 L33 59" stroke="#7a5a3a" stroke-width="1.5"/><rect x="92" y="40" width="50" height="40" fill="#b8574a"/><rect x="92" y="34" width="50" height="8" fill="#8a3d33"/><rect x="96" y="44" width="42" height="30" fill="#f0e2c4"/><rect x="66" y="70" width="12" height="10" fill="#6a5a3a"/><path d="M72 68 C66 60 78 54 72 46 C66 38 76 32 72 26" stroke="#9aa" stroke-width="1.5" fill="none"/>`},
+ {k:'jjg',n:'讲经阁',d:'授业：开坛授课效果 +30%；全师门修炼速度 +10%；弟子们会结伴来阁中读书论道，增进同门情谊',s:`<rect width="160" height="100" fill="#d8e6d8"/><rect y="82" width="160" height="18" fill="#b9a780"/><rect x="45" y="58" width="70" height="24" fill="#efe3c8"/><path d="M30 60 Q40 56 45 48 L115 48 Q120 56 130 60 Z" fill="#2f5a4a"/><rect x="55" y="34" width="50" height="14" fill="#efe3c8"/><path d="M42 36 Q50 32 55 24 L105 24 Q110 32 118 36 Z" fill="#2f5a4a"/><path d="M68 24 L80 12 L92 24 Z" fill="#244a3c"/><rect x="52" y="62" width="56" height="16" fill="#8a5a3a"/><rect x="55" y="64" width="4" height="12" fill="#d8b46a"/><rect x="61" y="64" width="4" height="12" fill="#a3302a"/><rect x="67" y="64" width="4" height="12" fill="#4a6a8a"/><rect x="73" y="64" width="4" height="12" fill="#d8b46a"/><rect x="88" y="64" width="16" height="12" fill="#f3ecd8"/>`},
+ {k:'snt',n:'神农堂',d:'养伤：弟子每月 25% 概率自愈小病，伤势每日额外恢复；你的气血每日额外恢复一次',s:`<rect width="160" height="100" fill="#e3ecd6"/><rect y="80" width="160" height="20" fill="#a9935f"/><rect x="40" y="50" width="80" height="30" fill="#f2e8cf"/><path d="M26 52 Q36 48 40 40 L120 40 Q124 48 134 52 Z" fill="#3f6b3a"/><rect x="72" y="60" width="16" height="20" fill="#6e4a2a"/><circle cx="52" cy="62" r="6" fill="#c9a24a"/><circle cx="52" cy="54" r="4" fill="#c9a24a"/><path d="M52 50 V46" stroke="#6e4a2a" stroke-width="2"/><rect x="128" y="58" width="2" height="22" fill="#6e4a2a"/><rect x="146" y="58" width="2" height="22" fill="#6e4a2a"/><rect x="126" y="58" width="24" height="2" fill="#6e4a2a"/><circle cx="133" cy="66" r="3" fill="#7aa35a"/><circle cx="141" cy="66" r="3" fill="#b85a4a"/><circle cx="137" cy="73" r="3" fill="#7aa35a"/><ellipse cx="20" cy="82" rx="9" ry="4" fill="#7a6a5a"/>`},
+ {k:'jxh',n:'静心湖',d:'静心：弟子心魔增长 -10%；你的心动增长 -10%',s:`<defs><linearGradient id="jxs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b4e7a"/><stop offset="1" stop-color="#d9a98a"/></linearGradient></defs><rect width="160" height="62" fill="url(#jxs)"/><circle cx="118" cy="20" r="9" fill="#f7efd2"/><path d="M0 62 L30 36 L52 54 L80 30 L112 58 L140 40 L160 52 V62 Z" fill="#4a5a6a"/><rect y="62" width="160" height="38" fill="#4f7a9a"/><path d="M110 70 H126 M106 76 H130 M114 82 H122" stroke="#f7efd2" stroke-width="1.5" opacity=".7"/><path d="M50 84 Q62 90 74 84 Z" fill="#6e4a2a"/><path d="M62 84 V74 L70 82" stroke="#6e4a2a" stroke-width="1.5" fill="#efe3c8"/><path d="M12 62 C14 48 22 40 30 36" stroke="#5a4a3a" stroke-width="3" fill="none"/><path d="M24 40 C20 52 18 60 20 70 M28 38 C26 50 26 60 28 72 M32 38 C32 50 34 58 36 68" stroke="#6a9a5a" stroke-width="1.5" fill="none"/>`},
+ {k:'ywt',n:'演武台',d:'战力：全师门战力 +10%；弟子们会不时上台切磋，可能长进、结仇或受伤',s:`<rect width="160" height="100" fill="#d6e2ee"/><path d="M0 60 L40 40 L70 56 L110 34 L160 58 V70 H0 Z" fill="#8fa3b5"/><rect y="70" width="160" height="30" fill="#b9a780"/><ellipse cx="80" cy="76" rx="56" ry="12" fill="#9a9488"/><ellipse cx="80" cy="73" rx="56" ry="12" fill="#c8c0b0"/><rect x="18" y="34" width="2" height="42" fill="#5a4a3a"/><path d="M20 34 H38 L34 40 L38 46 H20 Z" fill="#a3302a"/><rect x="140" y="34" width="2" height="42" fill="#5a4a3a"/><path d="M142 34 H160 L156 40 L160 46 H142 Z" fill="#a3302a"/><path d="M66 70 L72 50 M94 70 L88 50" stroke="#5a4a3a" stroke-width="2"/><path d="M72 50 L70 44 L74 44 Z M88 50 L86 44 L90 44 Z" fill="#c0c8d0"/><circle cx="66" cy="62" r="3" fill="#33414f"/><circle cx="94" cy="62" r="3" fill="#33414f"/>`},
+ {k:'zhl',n:'真火丹炉',d:'炼丹：炼丹成功率 +30%',s:`<rect width="160" height="100" fill="#2e2a2a"/><rect y="82" width="160" height="18" fill="#4a3a30"/><path d="M58 82 L54 92 M102 82 L106 92 M80 84 V94" stroke="#8a6a3a" stroke-width="4"/><path d="M46 50 Q46 86 80 86 Q114 86 114 50 Z" fill="#b8863a"/><rect x="42" y="44" width="76" height="8" rx="3" fill="#d8a64a"/><path d="M40 48 Q32 48 34 58 M120 48 Q128 48 126 58" stroke="#d8a64a" stroke-width="4" fill="none"/><rect x="74" y="58" width="12" height="12" fill="#7a5a2a"/><path d="M60 92 Q66 78 72 92 Q78 72 84 92 Q90 80 98 92 Z" fill="#f08a2a"/><path d="M68 92 Q74 82 80 92 Q86 84 92 92 Z" fill="#f8d24a"/><path d="M70 40 C64 30 76 24 70 14 M90 40 C96 30 84 24 90 14" stroke="#776" stroke-width="2" fill="none" opacity=".7"/>`},
+ {k:'lch',n:'灵草花园',d:'心情：在门弟子心情每日 +1，日常的心情低落减半',s:`<rect width="160" height="100" fill="#dcebe0"/><rect y="40" width="160" height="40" fill="#f2efe6"/><path d="M0 40 H160" stroke="#3b4a5a" stroke-width="4"/><circle cx="118" cy="62" r="16" fill="#9dc79a"/><path d="M102 62 A16 16 0 0 1 134 62" stroke="#3b4a5a" stroke-width="2" fill="none"/><rect y="80" width="160" height="20" fill="#9cc0b0"/><path d="M40 88 Q60 70 80 88" stroke="#a3302a" stroke-width="3" fill="none"/><path d="M14 80 L20 58 L28 64 L34 52 L40 80 Z" fill="#9a9a9a"/><path d="M144 80 V44 M150 80 V48 M138 80 V50" stroke="#5a8a4a" stroke-width="2"/><circle cx="56" cy="76" r="3" fill="#e88aa8"/><circle cx="62" cy="74" r="3" fill="#f2b8c8"/><circle cx="90" cy="76" r="3" fill="#e88aa8"/><circle cx="96" cy="78" r="2.5" fill="#f2d24a"/><circle cx="10" cy="88" r="3" fill="#e88aa8"/>`}];
 const BCOST=[1500,2500,4000,6000,8500,11500,15000,20000];
-const bCap=()=>[0,2,4,8][(G&&G.caveLv)||0];const bBuilt=()=>Object.keys(G.blds||{}).length;const bOpen=()=>((G.caveLv||0)>=1)&&G.p.rank>=5;
-const bActive=k=>!!(G&&G.blds&&G.blds[k]&&G.p.rank>=5);
+const bCap=()=>[0,2,4,8][(G&&G.caveLv)||0];const bBuilt=()=>Object.keys(G.blds||{}).length;const bOpen=()=>((G.caveLv||0)>=1)&&G.p.rank>=4;
+const bActive=k=>!!(G&&G.blds&&G.blds[k]&&G.p.rank>=4);
 ACTS.build={n:'营造',days:20,desc:'营造洞府建筑'};
 ACT_END.build=(days,o)=>{const B=BLD.find(x=>x.k===o.b);G.blds=G.blds||{};G.blds[o.b]=true;log(`${G.cave}的${B.n}落成。`);homeDs().forEach(x=>{x.mood+=5;clampD(x)});if(bBuilt()>=8)unlock('build8');return{k:'msg',title:'落成',html:`<div style="border-radius:12px;overflow:hidden"><svg viewBox="0 0 160 100" width="100%">${B.s}</svg></div><p class="big-c">${B.n}</p><p class="prose">${B.d}。</p>`}};
 function openBuild(sel){G.bSel=sel||G.bSel||BLD[0].k;const n=bBuilt(),cap=bCap(),cost=BCOST[Math.min(n,7)],days=15+5*n;const B=BLD.find(x=>x.k===G.bSel);const built=!!(G.blds||{})[B.k];
-  const lock=(G.caveLv||0)<1?'洞府达到玄品后方可营造。':G.p.rank<5?`需官至峰主方可营造${n?'；你已跌落峰主之位，建成的建筑暂时关闭，复位后恢复':''}。`:'';
-  const cards=BLD.map(b=>{const on=(G.blds||{})[b.k];const act=on&&G.p.rank>=5;return `<button class="bcard ${G.bSel===b.k?'sel':''}" onclick="openBuild('${b.k}')"><svg viewBox="0 0 160 100" class="${act?'':'gray'}">${b.s}</svg><span>${b.n}${on?(act?'':'（关闭）'):''}</span></button>`}).join('');
-  const btn=built?`<p class="hint">${G.p.rank>=5?'已建成，效果生效中。':'已建成，但你已不是峰主，效果暂时关闭。'}</p>`:`<button class="btn pri" style="width:100%" ${lock||n>=cap||G.p.jade<cost?'disabled':''} onclick="buildIt('${B.k}')">营造 · ${cost} 灵玉 · ${days} 日</button><p class="hint">${lock||(n>=cap?`${CAVE_N[G.caveLv||0]}洞天最多容纳 ${cap} 座建筑，继续修葺洞天可以建更多。`:`已建 ${n}/${cap}，建得越多越贵。现有灵玉 ${G.p.jade}。`)}</p>`;
+  const lock=(G.caveLv||0)<1?'洞府达到玄品后方可营造。':G.p.rank<4?`需官至副峰主方可营造${n?'；你已跌落副峰主之位，建成的建筑暂时关闭，复位后恢复':''}。`:'';
+  const cards=BLD.map(b=>{const on=(G.blds||{})[b.k];const act=on&&G.p.rank>=4;return `<button class="bcard ${G.bSel===b.k?'sel':''}" onclick="openBuild('${b.k}')"><svg viewBox="0 0 160 100" class="${act?'':'gray'}">${b.s}</svg><span>${b.n}${on?(act?'':'（关闭）'):''}</span></button>`}).join('');
+  const btn=built?`<p class="hint">${G.p.rank>=4?'已建成，效果生效中。':'已建成，但你已跌落副峰主之位，效果暂时关闭。'}</p>`:`<button class="btn pri" style="width:100%" ${lock||n>=cap||G.p.jade<cost?'disabled':''} onclick="buildIt('${B.k}')">营造 · ${cost} 灵玉 · ${days} 日</button><p class="hint">${lock||(n>=cap?`${CAVE_N[G.caveLv||0]}洞天最多容纳 ${cap} 座建筑，继续修葺洞天可以建更多。`:`已建 ${n}/${cap}，建得越多越贵。落成时宗门KPI +${bKpi(cost)}。现有灵玉 ${G.p.jade}。`)}</p>`;
   modal({title:'洞府营造',html:`<p class="hint">${CAVE_N[G.caveLv||0]}洞天 · 可建 ${cap} 座 · 已建 ${n} 座。建成后，弟子们也会邀你去那里做些别的事。</p><div class="bstrip">${cards}</div>
    <div class="blk"><h4>${B.n} ${built?'<span style="font-size:13px;color:var(--jade,#3a7a5a);margin-left:6px;font-weight:400">· 已建成</span>':''}</h4><p class="prose">${B.d}</p>${btn}</div>`,btns:[{t:'关闭',fn:closeModal}]});const se=document.querySelector('.bcard.sel');if(se&&se.scrollIntoView)se.scrollIntoView({inline:'center',block:'nearest'})}
 function buildIt(k){const n=bBuilt(),cost=BCOST[Math.min(n,7)];if(!bOpen()||n>=bCap()||G.p.jade<cost||(G.blds||{})[k])return;G.p.jade-=cost;log(`开始营造${BLD.find(x=>x.k===k).n}，花费灵玉 ${cost}。`);doAct('build',{days:15+5*n,b:k})}
@@ -6687,16 +6687,16 @@ const _renderMain17=renderMain;
 renderMain=function(){_renderMain17();if((G.caveLv||0)>=1){const u=document.querySelector('header.top .cave-up');if(u)u.insertAdjacentHTML('afterend',`<button class="cave-up" onclick="openBuild()" aria-label="洞府营造" title="洞府营造">⌂</button>`)}};
 (function(){const st=document.createElement('style');st.textContent=`.bstrip{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;-webkit-overflow-scrolling:touch}.bcard{flex:0 0 132px;scroll-snap-align:start;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);padding:0;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;font:inherit;color:inherit}.bcard.sel{border-color:var(--cinnabar);box-shadow:0 0 0 2px color-mix(in srgb,var(--cinnabar) 25%,transparent)}.bcard svg{width:100%;height:auto;display:block;transition:filter .3s}.bcard svg.gray{filter:grayscale(1) opacity(.5)}.bcard span{padding:6px 4px;font-size:14px;text-align:center}`;document.head.appendChild(st)})();
 // 建筑效果
-const _onMonth17=onMonth;onMonth=function(){const k0=G.p.kpi;_onMonth17();const dl=G.p.kpi-k0;if(dl>0&&bActive('zt'))G.p.kpi+=Math.round(dl*.1)};
-const _grad17=graduate;graduate=function(d){const k0=G.p.kpi;_grad17(d);const dl=G.p.kpi-k0;if(dl>0&&bActive('zt'))G.p.kpi+=Math.round(dl*.1)};
-const _endSec17=ACT_END.seclude;ACT_END.seclude=function(days,o){if(bActive('ns'))addPXP(Math.round(pGain()*days*1.2*.10));return _endSec17(days,o)};
-const _endTeach17=ACT_END.teach;ACT_END.teach=function(days,o){const r=_endTeach17(days,o);if(bActive('jjg'))presentDs().forEach(x=>{const f=fx(x);addDXP(x,Math.round((1+G.p.realm*.1)*rootMult(x.root)*(1+(f.cult||0))*f.teach*days*caveMult()*.25))});return r};
+const _onMonth17=onMonth;onMonth=function(){const k0=G.p.kpi;_onMonth17();const dl=G.p.kpi-k0;if(false)G.p.kpi+=Math.round(dl*.1)};
+const _grad17=graduate;graduate=function(d){const k0=G.p.kpi;_grad17(d);const dl=G.p.kpi-k0;if(false)G.p.kpi+=Math.round(dl*.1)};
+const _endSec17=ACT_END.seclude;ACT_END.seclude=function(days,o){if(bActive('ns'))addPXP(Math.round(pGain()*days*1.2*.20));return _endSec17(days,o)};
+const _endTeach17=ACT_END.teach;ACT_END.teach=function(days,o){const r=_endTeach17(days,o);if(bActive('jjg'))presentDs().forEach(x=>{const f=fx(x);addDXP(x,Math.round((1+G.p.realm*.1)*rootMult(x.root)*(1+(f.cult||0))*f.teach*days*caveMult()*.30))});return r};
 const _dDaily17=dDaily;dDaily=function(d){const r=_dDaily17(d);if(r&&bActive('snt')){if(d.sick&&G.date.d===1&&chance(.25)){d.sick=false;d.tend=0;d.sickM=0;sickNote(d,'heal')}else if(!d.sick&&hpPct(d)<1)regen(d)}return r};
 const _simDay17=simDay;simDay=function(){_simDay17();if(!G||G.over)return;if(bActive('snt'))regen(G.p,1);
   if(bActive('ywt')&&chance(.03)){const ps=presentDs().filter(d=>!(d.child&&d.age<6)&&!injD(d)&&!d.sick);if(ps.length>=2){const s=ps.sort(()=>R()-.5),a=s[0],b=s[1];if(chance(.6)){addRel(a,b,3);addDXP(a,gainD(a));addDXP(b,gainD(b));a.notes.push(`在演武台和${sibName(a,b)}切磋，互有长进`);b.notes.push(`在演武台和${sibName(b,a)}切磋，互有长进`)}else{addRel(a,b,-4);const l=chance(.5)?a:b,w=l===a?b:a;hurtD(l,ri(5,15));l.notes.push(`在演武台被${sibName(l,w)}打伤了`);w.notes.push(`在演武台切磋时下手重了，打伤了${sibName(w,l)}`)}}}};
 const _fx17=fx;fx=function(d){const o=_fx17(d);if(G&&bActive('jxh'))o.demon=(o.demon||1)*.9;if(G&&bActive('ywt'))o.pow=(o.pow||0)+.1;return o};
-const _pFx17=pFx;pFx=function(){const o=_pFx17();if(bActive('jxh'))o.calm=Math.min(.8,(o.calm||0)+.1);if(bActive('zhl'))o.alch=(o.alch||0)+.10;if(bActive('ywt'))o.pow=(o.pow||0)+.1;return o};
-const _simD17=simDisciple;simDisciple=function(d){_simD17(d);if(bActive('lch')&&d.status==='home'){d.mood+=.3;clampD(d)}};
+const _pFx17=pFx;pFx=function(){const o=_pFx17();if(bActive('jxh'))o.calm=Math.min(.8,(o.calm||0)+.1);if(bActive('zhl'))o.alch=(o.alch||0)+.30;if(bActive('ywt'))o.pow=(o.pow||0)+.1;return o};
+const _simD17=simDisciple;simDisciple=function(d){_simD17(d);if(bActive('lch')&&d.status==='home'){d.mood+=1;clampD(d)}};
 // 建筑邀约
 INV_B.forEach(v=>{if(INVITES.some(i=>i.k===v.k))return;const rom=/(^|\s)(A|L\d+)(\s|$)/.test(v.cond||'')&&!!(v.e&&(v.e.l||v.e.h));INVITES.push({k:v.k,n:v.n,days:v.days||1,b:v.b,rom,t:v.t,e:v.e||{},r:v.r,c:d=>bActive(v.b)&&(!v.g||MB[d.mbti].g===v.g)&&(!rom||d.age>=18)&&condStr(v.cond,d)})});
 </script>
@@ -6935,7 +6935,7 @@ const OKR_RARE=['f:zqj','p:fs:3','p:dh:3','p:hh:3','p:xs:3'],OKR_RARE_W={'f:zqj'
 function okrExp(){if(G.okrExp==null)G.okrExp=2000;return G.okrExp}
 function okrLines(){const e=okrExp();return[e*.25,e*.5,e*.75,e].map(x=>Math.round(x))}
 function okrTierOf(k){const L=okrLines();return k>=L[3]?4:k>=L[2]?3:k>=L[1]?2:k>=L[0]?1:0}
-function okrSync(){if(!G||G.over)return;if(G.okrSnap==null){G.okrSnap=G.p.kpi;return}const dl=G.p.kpi-G.okrSnap;if(dl>0&&isLeader())G.p.kpi+=Math.round(dl*OKR_BOOST);G.okrSnap=G.p.kpi}
+function okrSync(){if(!G||G.over)return;if(G.okrSnap==null){G.okrSnap=G.p.kpi;return}const dl=G.p.kpi-G.okrSnap;const rt=(isLeader()?OKR_BOOST:0)+(bActive('zt')?.3:0);if(dl>0&&rt>0)G.p.kpi+=Math.round(dl*rt);G.okrSnap=G.p.kpi}
 function pillMin(g){for(let i=0;i<30;i++){const k=randPill(Math.min(3,Math.max(g,rollGrade(G.p.realm))));if(itemInfo(k).g>=g)return k}return `p:jq:${g}`}
 function faqiMin(g){return randFaqi(Math.min(3,Math.max(g,rollGrade(G.p.realm))))}
 function leaderReview(y){const p=G.p;const e=okrExp(),L=okrLines(),k=p.kpi,t=okrTierOf(k);const rm=clamp(1+(e/2000-1)*.5,.75,3);
@@ -7073,7 +7073,6 @@ ghostCheck=function(){const dead=G.ds.filter(d=>d.status==='dead'&&!d.rbDone);
 const _ghost21=EV.ghost;
 EV.ghost=e=>{const d=getD(e.id);if(!d||d.status!=='dead'||d.rbDone||d.rebornSched)return nextEvent();addGuilt(d,1);if(G.over)return;_ghost21(e);
   const pr=document.querySelector('#modal .prose');if(!pr)return;let h='';const m=d.memory||0;
-  if(m>=60&&m<100&&(d.love||0)>=60){const L=(rbPlanOf(d)==='ds'?ZY_DS:ZY_ZS)[d.mbti];if(L)h+=`<p class="prose">${fmt(pick(L),d)}</p>`}
   h+=`<p class="hint">梦里梦外，愧疚又重了一层（${d.name} ${d.guilt} 层，共 ${guiltTotal()} 层）。</p>`;pr.insertAdjacentHTML('afterend',h)};
 // 清明
 openQingming=function(e){const dead=G.ds.filter(d=>d.status==='dead'&&!d.rbDone);e.swept=e.swept||{};const yh=countItem(G.bag,'p:yh:0');
@@ -7127,5 +7126,91 @@ EV.remember=e=>{const d=getD(e.id);if(!d||d.mem||!d.pastName||d.pastName===d.nam
   const setName=n=>{if(n!==d.name){const o=d.name;d.name=n;d.given=n===past?(d.pastGiven||d.given):d.given;logD(d,`师尊说，还叫${TA(d)}${n}。`);log(`${o}改回了前世的名字「${n}」。`)}else logD(d,`师尊说，今生就叫${n}。`);d.pastName=null;save();closeModal()};
   modal({title:'前尘',x:false,html:`<p class="prose">${now}忽然停下了手里的事，怔怔地看着你，很久很久。<br>“师尊……”${TA(d)}的声音在发抖，“我想起来了。我全都想起来了。”<br><br>${(NAME_ASK[d.mbti]||NAME_ASK.ISFJ).replace(/\{past\}/g,past).replace(/\{now\}/g,now).replace(/\{ta\}/g,TA(d))}</p>`,
    btns:[{t:`还叫你${past}`,cls:'pri',fn:()=>setName(past)},{t:`就叫${now}`,fn:()=>setName(now)}]})};
+</script>
+<style>
+.buff-ic.buff{border-color:var(--jade,#3a7a5a);color:var(--jade,#3a7a5a);font-size:12px}
+</style>
+<script>
+// ================= v22：丹药智能服用 / Buff 框 / 中元辞别 / 爱恋锁定 / 差事随职位 / 一键红包 / 建筑加强 =================
+// ---------- 1. 丹药：服到够为止 ----------
+function pillBlock(I){const p=G.p,g=I.g;
+  if((I.kind==='jx'||I.kind==='wq')&&heartTotal()<=0)return '动心已经是 0 了，不必再服';
+  if((I.kind==='jq'||I.kind==='yl')&&p.xp>=needP(p.realm)&&(BREAK[p.realm]||p.realm>=44))return '修为已满，需先突破';
+  if((I.kind==='hy'||I.kind==='hc')&&hpOf(p)>=hpMax(p))return '气血已满';
+  if(I.kind==='hx'&&(G.guardDays||0)>=[15,30,60,120][g])return `护心药力尚在（还剩 ${G.guardDays} 日）`;
+  if(I.kind==='sw'&&(p.swUntil||0)-today()>=[30,60,90,180][g]&&(p.swPow||0)>=[.10,.10,.20,.25][g])return `神武药力尚在（还剩 ${p.swUntil-today()} 日）`;
+  return ''}
+const _usePill22=usePill;
+usePill=function(k){const I=itemInfo(k);if(I.type==='p'){const b=pillBlock(I);if(b)return toast(b)}return _usePill22(k)};
+useAll=function(k){const I=itemInfo(k);let n=countItem(G.bag,k),used=0,why='';
+  while(n>0){why=pillBlock(I);if(why)break;usePill(k);const m=countItem(G.bag,k);if(m>=n)break;used+=n-m;n=m;if(I.kind==='hx'||I.kind==='sw')break}
+  openBag('p');const left=countItem(G.bag,k);if(left>0&&used>0)setTimeout(()=>toast(`服下 ${used} 枚，${why||'药力不叠加'}，余下 ${left} 枚收好了`),50)};
+// Buff 框
+function pBuffs(){const p=G.p,o=[];if((G.guardDays||0)>0)o.push({n:'护心',s:`${G.guardDays}日`,d:`太乙护心丹：还剩 ${G.guardDays} 日，期间心动增长减半`});
+  if((p.swUntil||0)>today())o.push({n:'神武',s:`${p.swUntil-today()}日`,d:`神武丹：还剩 ${p.swUntil-today()} 日，战力 +${Math.round((p.swPow||0)*100)}%`});
+  if((p.brk||0)>0)o.push({n:'破境',s:`+${Math.round(p.brk*100)}%`,d:`破境丹：下次突破成功率 +${Math.round(p.brk*100)}%（突破后消散）`});return o}
+function openBuffs(){const b=pBuffs();modal({title:'药力',html:b.length?`<ul class="dlog" style="max-height:none;font-size:14px">${b.map(x=>`<li><b>${x.n}</b>：${x.d}</li>`).join('')}</ul>`:'<p class="hint">身上没有药力。</p>',btns:[{t:'知道了',cls:'pri',fn:closeModal}]})}
+const _renderMain22=renderMain;
+renderMain=function(){_renderMain22();const pn=document.querySelector('.pcard .pname');const b=pBuffs();if(!pn||!b.length)return;const h=b.map(x=>`<button class="buff-ic buff" onclick="openBuffs()" title="${x.d}">${x.n}<b>${x.s}</b></button>`).join('');const first=pn.querySelector('.buff-ic');if(first)first.insertAdjacentHTML('beforebegin',h);else pn.insertAdjacentHTML('beforeend',h)};
+// ---------- 2. 中元：入梦与辞别 ----------
+function startReborn(d){if(!d||d.status!=='dead'||d.rbDone||d.rebornSched)return;const ds=rbPlanOf(d)==='ds';d.rebornSched=true;d.rbType=ds?'ds':'zs';d.rbYear=G.date.y;G.reborn=G.reborn||[];
+  G.reborn.push({id:d.id,due:ds?dn(G.date):dn({y:G.date.y+10,m:G.date.m,d:G.date.d}),type:d.rbType})}
+// 铭记满 100 后不再立刻转世，而是等下一个中元来辞别
+checkReborn=function(d){if(!d||d.status!=='dead'||d.rbDone||d.rebornSched||(d.memory||0)<100||d.byeHint)return '';d.byeHint=true;return `<br><br>${d.name}回头看了你一眼，像是有话想说，又咽了回去。<br>你隐约觉得，明年中元，${TA(d)}会来道别。`};
+const ZY_BYE={
+INTJ:SP(`“弟子想明白了。执念留在这里，于您于弟子都是拖累。{s}，往前走，别回头。”|（{d}替你理了理衣襟）“您的道还很长。弟子不该是您路上的一块石头。”|“该放下的，弟子放下了。剩下的路，交给您了。”`),
+INTP:SP(`“弟子想了很久，结论是：您该放下了。……弟子也是。”|（{d}挠挠头笑了）“听说轮回那边也挺有意思，弟子去看看。您接着修您的大道。”|“别再给弟子烧香了，省下来买丹药，突破要紧。”`),
+ENTJ:SP(`“{s}，您的路还没走完。别为弟子停下。”|（{d}抱拳一礼，干脆利落）“弟子先行一步。您要登顶，弟子在下面看着。”|“回头看没有意义。往前走——这是弟子最后一句劝。”`),
+ENTP:SP(`“弟子去投胎啦，下辈子换个师父试试——开玩笑的。{s}，放下吧，您还得飞升呢。”|（{d}冲你眨眨眼）“老惦记着弟子，耽误修炼，宗门可是要扣您KPI的。”|“这一世跟着您，值了。剩下的路，您自己走。”`),
+INFJ:SP(`“弟子都知道，您一直放不下。可是{s}，弟子已经不疼了。”|（{d}握住你的手，轻轻摇了摇）“去修您的大道吧。弟子会在很远的地方，替您高兴。”|“弟子来，只是想告诉您：不是您的错。”`),
+INFP:SP(`“{s}，弟子不怪您，一点都不怪。所以……您也别再怪自己了。”|（{d}把一朵小花放进你掌心）“弟子要走了。您要好好的，要比从前更好。”|“下辈子弟子会过得很好的。您也要过得很好，说好了。”`),
+ENFJ:SP(`“{s}，门下还有那么多人等着您照顾，别把心都留在弟子这里。”|（{d}笑着替你擦了擦眼角）“弟子走得很安心。您也要安心。”|“答应弟子，以后清明别再哭了。弟子会难过的。”`),
+ENFP:SP(`“{s}！弟子要去新地方冒险啦！您也别停在这儿，往前冲！”|（{d}用力抱了你一下）“不许难过太久哦，不然弟子在那边也会难过的！”|“这辈子能做您的徒弟，弟子超开心的。所以，放下吧。”`),
+ISTJ:SP(`“弟子该做的事都做完了，该走了。{s}，修行不可懈怠。”|（{d}端端正正地行了最后一礼）“弟子告退。往后，请{s}保重。”|“规矩是亡者不该扰生人。弟子守了这么久的规矩，今天再守最后一次。”`),
+ISFJ:SP(`“{s}，您最近都没好好吃饭吧……弟子走了以后，您一定要照顾好自己。”|（{d}替你添了件衣裳，动作很轻）“天凉了。以后弟子不能提醒您了。”|“弟子不放心您……可弟子知道，您会好起来的。”`),
+ESTJ:SP(`“{s}，事已至此，再想无益。您该把心思放回修行上了。”|（{d}板着脸，眼睛却是红的）“弟子这就走了，往后不必再记挂。”|“宗门还要您撑着。别为弟子乱了阵脚。”`),
+ESFJ:SP(`“{s}，弟子走了以后，大家就拜托您了。您也要开开心心的。”|（{d}紧紧抱着你，很久才松开）“好啦，弟子该走了。不许哭。”|“团圆饭弟子是吃不上了，您要替弟子多吃一碗。”`),
+ISTP:SP(`“走了。”{d}顿了顿，“您也是，别停。”|（{d}把一枚磨得发亮的石子放在你掌心，转身就走，一句话也没说）|“这样就够了。往前走吧，{s}。”`),
+ISFP:SP(`“弟子要去看别处的花了。{s}，您的花也还要开。”|（{d}安安静静地陪你坐了一会儿）“弟子会想您的。可您不要一直想着弟子。”|“风很好，月亮也很好。弟子走得不难过，您也别难过。”`),
+ESTP:SP(`“行了{s}，别哭丧着脸。弟子这辈子痛快过了，您接着去痛快！”|（{d}大笑着拍了拍你的肩）“大道就在前头，冲啊{s}！”|“别回头看了。弟子在前面等着看您飞升呢。”`),
+ESFP:SP(`“{s}，弟子要去下一场热闹了！您也要热热闹闹地活下去！”|（{d}最后为你跳了一支舞，衣角一点点散成了光）“记住弟子最好看的样子就行啦。”|“不许天天愁眉苦脸！弟子在那边看着呢！”`)};
+ghostCheck=function(){const dead=G.ds.filter(d=>d.status==='dead'&&!d.rbDone);
+  dead.filter(d=>!d.rebornSched&&(d.memory||0)>=100).forEach(d=>G.queue.push({k:'zyBye',id:d.id}));
+  const el=dead.filter(d=>!d.rebornSched&&(d.memory||0)<100&&((d.love||0)>=60||(d.demon||0)>=80));if(el.length)G.queue.push({k:'ghost',id:pick(el).id});
+  const gone=dead.filter(d=>d.rebornSched&&!d.goneShown);if(gone.length){gone.forEach(d=>d.goneShown=true);const nm=gone.map(d=>d.name).join('、'),ta=gone.length>1?'他们':TA(gone[0]);
+    G.queue.push({k:'msg',title:'中元·空梦',html:`<p class="prose">中元夜，你在梦里的桃树下等了很久。<br>${nm}没有来。<br><br>夜风吹过，什么也没留下。或许${ta}已经走了——是终于放下了，还是实在放不下，要换一条路回来找你，你不知道。</p>`})}};
+EV.zyBye=e=>{const d=getD(e.id);if(!d||d.status!=='dead'||d.rbDone||d.rebornSched)return nextEvent();const re=(d.love||0)>=60;
+  if(re){const ds=rbPlanOf(d)==='ds';const L=(ds?ZY_DS:ZY_ZS)[d.mbti]||ZY_ZS.ISFJ;startReborn(d);d.goneShown=true;log(`中元夜，${d.name}来辞别。`);logD(d,'中元来辞别，说一定会回来。');
+    modal({title:'中元·辞别',x:false,html:`<p class="prose">中元夜，${d.name}来了。和往年不一样，${TA(d)}没有在桃树下坐下。<br><br>${fmt(pick(L),d)}<br><br>说完，${TA(d)}朝你深深一拜，身影一点点淡进了夜色里。${ds?'<br>屋里冷得出奇。':'<br>你听见很远的地方，有人轻轻唤了一声“师尊”。'}</p><p class="hint">${d.name}${ds?'放不下，要换一具身子回来找你。':'入了轮回。快则十年，或许会再回到你身边。'}此后清明、中元，不会再见到${TA(d)}的魂魄。</p>`,btns:[{t:'……',cls:'pri',fn:closeModal}]})}
+  else{const g0=d.guilt||0;d.guilt=0;d.rbDone=true;d.departed=true;log(`中元夜，${d.name}来辞别，从此放下了。`);logD(d,'中元来辞别，劝师尊放下，从此不再回来。');unlock('zybye');
+    modal({title:'中元·辞别',x:false,html:`<p class="prose">中元夜，${d.name}来了。和往年不一样，${TA(d)}看起来很轻松。<br><br>${fmt(pick(ZY_BYE[d.mbti]||ZY_BYE.ISFJ),d)}<br><br>${TA(d)}笑了笑，转身走进夜色里。这一次，你知道${TA(d)}不会再来了。</p><p class="hint">${d.name}放下了，你也该放下了。${g0?`对${TA(d)}的愧疚（${g0} 层），随之散去。`:''}</p>`,btns:[{t:'目送',cls:'pri',fn:closeModal}]})}};
+ACH.zybye={n:'放下',d:'有陨落的弟子在中元夜来辞别，劝你放下'};
+// ---------- 3. 有道侣者对师尊的爱恋清空且不再增长 ----------
+const _addLove22=addLove;addLove=function(d,v){if(d&&d.partner){d.love=0;return}return _addLove22(d,v)};
+const _clampD22=clampD;clampD=function(d){_clampD22(d);if(d&&d.partner&&d.love>0)d.love=0};
+const _simDay22=simDay;simDay=function(){_simDay22();if(!G||G.over)return;G.ds.forEach(d=>{if(d.partner&&d.love>0)d.love=0});
+  if(bActive('jjg')&&chance(.04)){const ps=presentDs().filter(d=>!(d.child&&d.age<6)&&!d.sick);if(ps.length>=2){const s=ps.sort(()=>R()-.5),a=s[0],b=s[1];const t=pick(['在讲经阁和{b}共读一卷古籍，互相讲了一下午','和{b}在讲经阁为一句心法争了半天，最后都有所得','拉着{b}去讲经阁抄经，抄着抄着都睡着了','在讲经阁替{b}讲解剑谱','和{b}在讲经阁对坐论道，越聊越投缘']);
+    a.notes.push(t.replace('{b}',sibName(a,b)));b.notes.push(t.replace('{b}',sibName(b,a)).replace(/^在讲经阁替(.+)讲解剑谱$/,'在讲经阁听$1讲解剑谱'));addRel(a,b,3);addDXP(a,gainD(a)*.5);addDXP(b,gainD(b)*.5);a.mood+=2;b.mood+=2;clampD(a);clampD(b)}
+   else if(ps.length===1&&chance(.5)){ps[0].notes.push('独自在讲经阁读了一整天书');addDXP(ps[0],gainD(ps[0])*.5)}}};
+// ---------- 4. 修为反超师尊者修炼 -60%；讲经阁全员修炼 +10% ----------
+const _gainD22=gainD;gainD=function(d){let v=_gainD22(d);if(G&&d.status==='home'&&d.realm>G.p.realm)v*=.4;if(G&&bActive('jjg'))v*=1.1;return v};
+const _pGain22=pGain;pGain=function(){return _pGain22()*(bActive('jjg')?1.1:1)};
+// 差事随职位升难度、涨报酬
+const _genTasks22=genTasks;
+genTasks=function(){_genTasks22();const r=G.p.rank||0,km=1+r*.35,jm=1+r*.25;(G.tasks||[]).forEach(t=>{if(t.sc)return;t.sc=true;
+  if(t.ty==='fight'){t.diff=clamp(t.diff+r,5,44);t.kpi=Math.round((4+Math.floor(t.diff/4))*km);t.jade=Math.round(t.jade*jm)}
+  else if(t.ty==='time'){if(t.risky)t.diff=clamp(t.diff+Math.floor(r/2),5,44);else if(r>=5&&chance(.25)){t.risky=true;t.diff=clamp(G.p.realm-2+Math.floor(r/2),5,44)}t.kpi=Math.round(t.kpi*km);t.jade=Math.round(t.jade*jm)}
+  else if(t.ty==='item'){if(r>=4&&t.need[0]==='p')t.cnt+=Math.floor(r/3);t.n=`上缴${itemInfo(t.need).name}${t.cnt>1?'×'+t.cnt:''}`;t.kpi=Math.round(t.kpi*km*(t.cnt>1?1.2:1));t.jade=Math.round(t.jade*jm)}
+  else if(t.ty==='donate'){t.kpi=Math.round(t.kpi*(1+r*.15))}})};
+// ---------- 5. 一键红包 ----------
+function rpAll(i){const e=G.events.find(x=>x.k==='newyear');if(!e||e.rpDone)return;const list=G.ds.filter(d=>d.status==='home'||d.status==='grad');const tot=RP[i]*list.length;if(!list.length)return;if(G.p.jade<tot)return toast('灵玉不够');list.forEach(d=>e.rp[d.id]=i);giveRed(e,list,tot)}
+const _openNewYear22=openNewYear;
+openNewYear=function(e){_openNewYear22(e);if(e.rpDone)return;const list=G.ds.filter(d=>d.status==='home'||d.status==='grad');if(!list.length)return;const it=document.querySelector('#modal .items');if(!it)return;
+  it.insertAdjacentHTML('beforebegin',`<div class="blk"><h4>一键发红包 · 每人同额</h4><div class="goals">${RP.map((v,i)=>i?`<button ${G.p.jade<v*list.length?'disabled':''} onclick="rpAll(${i})">${v}<small style="display:block;font-size:11px;opacity:.7">共${v*list.length}</small></button>`:'').join('')}</div></div>`)};
+// ---------- 6. 建筑：落成计 KPI；灵草花园减半心情低落 ----------
+function bKpi(cost){return Math.round(cost/50)}
+const _endBuild22=ACT_END.build;
+ACT_END.build=function(days,o){const n0=bBuilt();const r=_endBuild22(days,o);const cost=BCOST[Math.min(n0,7)];const k=bKpi(cost);G.p.kpi+=k;log(`${BLD.find(x=>x.k===o.b).n}落成，宗门KPI +${k}。`);if(r&&r.html)r.html+=`<p class="hint">宗门KPI +${k}</p>`;return r};
+const _simD22=simDisciple;simDisciple=function(d){const m0=d.mood;_simD22(d);if(bActive('lch')&&d.status==='home'&&d.mood<m0){d.mood=m0-(m0-d.mood)*.5;clampD(d)}};
 </script>
 </body></html>
