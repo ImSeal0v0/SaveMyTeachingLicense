@@ -315,7 +315,7 @@ const PILLS={
   zl:{n:'真言丹',d:g=>'赠徒服下后会吐露一句真心话（透露爱恋与心魔的大概）',p:50,days:25,only:1},
   yl:{n:'益灵丹',d:g=>`服下增加修为（当前境界所需的 ${[1,2,3,5][g]}%）`,p:35,days:20},
   ct:{n:'淬体丹',d:g=>`永久提升气血上限 ${[10,20,30,40][g]} 点（累计最多 +500）`,p:60,days:40},
-  hx:{n:'太乙护心丹',d:g=>`自服：${[15,30,60,120][g]} 日内心动增长减半`,p:70,days:30},
+  hx:{n:'太乙护心丹',d:g=>`自服：${[15,30,60,120][g]} 日内心动增长减半（多服可叠加天数）`,p:70,days:30},
   fs:{n:'返生丹',d:()=>'服下后，下一次气血耗尽时保住性命（恢复三成气血）',p:400,days:120,only:3}
 };
 const FAQI={
@@ -5463,7 +5463,7 @@ function usePill(k){const I=itemInfo(k);if(I.type!=='p')return;const g=I.g;
   else if(I.kind==='zl'){s='你对自己说了句真话：该收收心了'}
   else if(I.kind==='yl'){const v=Math.round(needP(G.p.realm)*[1,2,3,5][g]/100);addPXP(v);s=`修为 +${v}`}
   else if(I.kind==='ct'){if((G.p.hpf||0)>=500){addItem(G.bag,k);return toast('淬体已到极限（+500）')}G.p.hpf=Math.min(500,(G.p.hpf||0)+[10,20,30,40][g]);s=`气血上限 +${[10,20,30,40][g]}（累计 +${G.p.hpf}）`}
-  else if(I.kind==='hx'){G.guardDays=Math.max(G.guardDays||0,[15,30,60,120][g]);s=`${G.guardDays}日内心动增长减半`}
+  else if(I.kind==='hx'){G.guardDays=(G.guardDays||0)+[15,30,60,120][g];s=`${G.guardDays}日内心动增长减半`}
   else if(I.kind==='fs'){G.p.revive=true;s='心脉被护住了'}
   else if(I.kind==='wq'){addHeart(-Math.round(WQ[g]/2));s='心湖一片清冷'}
   else if(I.kind==='mj'){healP(2);s='甜。'}
@@ -5691,7 +5691,7 @@ function sendParcel(id){const d=getD(id);if(d.lastParcel===dn(G.date))return toa
 // ---------- 孕育 ----------
 function carrierOf(d){const P=G.p.gender,D=d.gender;const carry=g=>g!=='m',sire=g=>g!=='f';const o=[];if(carry(P)&&sire(D))o.push('p');if(carry(D)&&sire(P))o.push('d');if(!o.length)return null;if(o.length===1)return o[0];return G.p.realm<=d.realm?'p':'d'}
 function acceptBed(d){addHeart(35,d);addLove(d,15);d.demon-=20;d.favor+=10;clampD(d);logD(d,'那一夜之后，看师尊的眼神变了。');let t='床帐落下。<br>……天亮时，你望着帐顶，许久没有说话。无情道的心法在识海里一字一字地碎开。';
-  const c=carrierOf(d);if(c&&!G.preg&&d.status!=='dead'&&chance(.35)){G.preg={carrier:c==='p'?'p':d.id,mate:d.id,days:0,kept:false}}result(t,d)}
+  const c=carrierOf(d);if(c&&!G.preg&&d.status!=='dead'&&chance(pregP(d))){G.preg={carrier:c==='p'?'p':d.id,mate:d.id,days:0,kept:false}}result(t,d)}
 function miscarry(){const P=G.preg;if(!P)return;G.preg=null;const mate=getD(P.mate);if(P.carrier==='p'){dropRealm(G.p);if(mate){mate.demon=clamp(mate.demon+50,0,100);logD(mate,'得知孩子没了，整夜未眠。')}G.queue.push({k:'msg',title:'小产',html:`<p class="prose">一阵剧痛之后，你知道，那个孩子没有了。<br>你的修为跌落至${REALMS[G.p.realm]}。${mate?`<br>${mate.name}守在门外，一句话也没说。`:''}</p>`})}
   else{const d=getD(P.carrier);if(d){dropRealm(d);d.demon=clamp(d.demon+50,0,100);d.mood-=30;clampD(d);logD(d,'小产，修为跌落。');G.queue.push({k:'msg',title:'小产',html:`<p class="prose">${d.name}受伤后小产了。${TA(d)}的修为跌落至${REALMS[d.realm]}，整个人像被抽空了一样。</p>`})}}}
 const PUBLIC_TYPES=['ENTP','ESTP','ESFP','ENFP','ENTJ','ESTJ'];
@@ -5704,7 +5704,7 @@ EV.pregD=()=>{const P=G.preg;if(!P)return nextEvent();const d=getD(P.carrier);if
   opt('不负责',()=>{G.preg=null;d.favor=0;d.love=0;d.demon=100;hurtD(d,70);clampD(d);logD(d,'独自去了药堂，从此再没笑过。');let t='{d}看了你很久，转身走了。三日后，{ta}独自去了药堂。';
     if(PUBLIC_TYPES.includes(d.mbti)&&chance(.5)){G.p.kpi-=150;if(G.p.rank>=8){t+=`<br><br>没过几天，这件事传遍了整个玄天宗。长老会震怒，却拿你这个宗主无可奈何，宗门KPI -150。`;log('丑闻传遍宗门。')}else{G.p.rank=Math.max(0,G.p.rank-1);t+=`<br><br>没过几天，这件事传遍了整个玄天宗。长老会震怒：你被降为${RANKS[G.p.rank]}，宗门KPI -150。`;log('丑闻传遍宗门，你被降职。')}}result(t,d)})])};
 EV.birth=()=>{const P=G.preg;if(!P)return nextEvent();const mate=getD(P.mate);const car=P.carrier==='p'?null:getD(P.carrier);G.preg=null;
-  if(chance(.08)){if(!car){setEnding('birth',mate);return}killD(car,'难产而亡。')}
+  if(chance(dystP(P))&&!lzSave(car||null,'难产')){if(!car){setEnding('birth',mate);return}killD(car,'难产而亡。')}
   if(car&&car.status==='dead'){}else if(P.carrier==='p'){if(mate)addHeart(80,mate)}else addHeart(80,car);if(G.over)return;
   const c=genChild(P,mate);BABY=c;unlock('baby');log(`${car&&car.status==='dead'?car.name+'难产而亡，留下一个孩子':'孩子降生了'}。`);
   modal({title:'降生',x:false,html:`<p class="prose">${car&&car.status==='dead'?`${car.name}拼尽最后一口气生下了孩子，再也没有醒来。<br>`:''}一声啼哭划破了夜色。是个${GN[c.gender]==='男'?'男孩':GN[c.gender]==='女'?'女孩':GN[c.gender]+'的孩子'}。</p>
@@ -6868,7 +6868,7 @@ pairFmt=function(s,a,b){return _pairFmt18(String(s).replace(/\{xa\}/g,isElder(a)
 <script>
 // ================= v19：新丹药 / 丹毒 / 赐道号 / 大比改制 / 仙门大比 =================
 Object.assign(PILLS,{
-  sw:{n:'神武丹',d:g=>`服下后 ${[30,60,90,180][g]} 日内战力 +${[10,10,20,25][g]}%（弟子外出、比试时会自己服用）`,p:45,days:25},
+  sw:{n:'神武丹',d:g=>`服下后 ${[30,60,90,180][g]} 日内战力 +${[10,10,20,25][g]}%（多服可叠加天数；弟子外出、比试时会自己服用）`,p:45,days:25},
   dh:{n:'定魂丹',d:()=>'命悬一线时自动服下：气血耗尽时八成救回（恢复一成气血，返生丹优先）；动心将满时三成救回（境界跌回本段最低，动心退至90）。合体期方可炼制',p:1200,days:200,only:3},
   hh:{n:'九转回魂芝',d:()=>'天地灵根，不可炼制。身死道消后，可服下它回到上一个节点重来（囚禁、有情道等结局无效）',p:6000,days:0,only:3,hidden:true}});
 Object.assign(ACH,{
@@ -6886,7 +6886,7 @@ function forceAdd(bag,k){const e=bag.find(x=>x.k===k);if(e)e.n++;else bag.push({
 const pillTotal=bag=>bag.filter(x=>x.k[0]==='p').reduce((s,x)=>s+x.n,0);
 const _usePill19=usePill;
 usePill=function(k){const I=itemInfo(k);if(I.type!=='p')return;if(I.kind==='hh')return toast('九转回魂芝须在身死之后才能服下');if(I.kind==='dh')return toast('定魂丹会在你命悬一线时自动服下');
-  const before=pillTotal(G.bag);if(I.kind==='sw'){if(!removeItem(G.bag,k))return;const g=I.g;G.p.swUntil=today()+[30,60,90,180][g];G.p.swPow=[.10,.10,.20,.25][g];toast(`服下${I.name}：${[30,60,90,180][g]}日内战力 +${Math.round(G.p.swPow*100)}%`);save();openBag('p')}else _usePill19(k);
+  const before=pillTotal(G.bag);if(I.kind==='sw'){if(!removeItem(G.bag,k))return;const g=I.g;const act=(G.p.swUntil||0)>today();G.p.swUntil=Math.max(G.p.swUntil||0,today())+[30,60,90,180][g];G.p.swPow=act?Math.max(G.p.swPow||0,[.10,.10,.20,.25][g]):[.10,.10,.20,.25][g];toast(`服下${I.name}：战力 +${Math.round(G.p.swPow*100)}%，药力还剩 ${G.p.swUntil-today()} 日`);save();openBag('p')}else _usePill19(k);
   const used=before-pillTotal(G.bag);if(used>0)pillCount(null,used)};
 function dUseSw(d){if(!d||(d.swUntil||0)>today())return;const k=bestPill(d.bag,'sw');if(!k)return;removeItem(d.bag,k);const g=+k.split(':')[2];d.swUntil=today()+[30,60,90,180][g];d.swPow=[.10,.10,.20,.25][g];d.notes.push(`服下了${itemInfo(k).name}`);pillCount(d,1)}
 const _pFx19=pFx;pFx=function(){const o=_pFx19();if(G&&(G.p.swUntil||0)>today())o.pow=(o.pow||0)+(G.p.swPow||0);return o};
@@ -7255,21 +7255,19 @@ function pillBlock(I){const p=G.p,g=I.g;
   if((I.kind==='jx'||I.kind==='wq')&&heartTotal()<=0)return '动心已经是 0 了，不必再服';
   if((I.kind==='jq'||I.kind==='yl')&&p.xp>=needP(p.realm)&&(BREAK[p.realm]||p.realm>=44))return '修为已满，需先突破';
   if((I.kind==='hy'||I.kind==='hc')&&hpOf(p)>=hpMax(p))return '气血已满';
-  if(I.kind==='hx'&&(G.guardDays||0)>=[15,30,60,120][g])return `护心药力尚在（还剩 ${G.guardDays} 日）`;
-  if(I.kind==='sw'&&(p.swUntil||0)-today()>=[30,60,90,180][g]&&(p.swPow||0)>=[.10,.10,.20,.25][g])return `神武药力尚在（还剩 ${p.swUntil-today()} 日）`;
   return ''}
 const _usePill22=usePill;
 usePill=function(k){const I=itemInfo(k);if(I.type==='p'){const b=pillBlock(I);if(b)return toast(b)}return _usePill22(k)};
 useAll=function(k){const I=itemInfo(k);let n=countItem(G.bag,k),used=0,why='';
-  while(n>0){why=pillBlock(I);if(why)break;usePill(k);const m=countItem(G.bag,k);if(m>=n)break;used+=n-m;n=m;if(I.kind==='hx'||I.kind==='sw')break}
+  while(n>0){why=pillBlock(I);if(why)break;usePill(k);const m=countItem(G.bag,k);if(m>=n)break;used+=n-m;n=m}
   openBag('p');const left=countItem(G.bag,k);if(left>0&&used>0)setTimeout(()=>toast(`服下 ${used} 枚，${why||'药力不叠加'}，余下 ${left} 枚收好了`),50)};
 // Buff 框
 function pBuffs(){const p=G.p,o=[];if((G.guardDays||0)>0)o.push({n:'护心',s:`${G.guardDays}日`,d:`太乙护心丹：还剩 ${G.guardDays} 日，期间心动增长减半`});
   if((p.swUntil||0)>today())o.push({n:'神武',s:`${p.swUntil-today()}日`,d:`神武丹：还剩 ${p.swUntil-today()} 日，战力 +${Math.round((p.swPow||0)*100)}%`});
   if((p.brk||0)>0)o.push({n:'破境',s:`+${Math.round(p.brk*100)}%`,d:`破境丹：下次突破成功率 +${Math.round(p.brk*100)}%（突破后消散）`});return o}
-function openBuffs(){const b=pBuffs();modal({title:'药力',html:b.length?`<ul class="dlog" style="max-height:none;font-size:14px">${b.map(x=>`<li><b>${x.n}</b>：${x.d}</li>`).join('')}</ul>`:'<p class="hint">身上没有药力。</p>',btns:[{t:'知道了',cls:'pri',fn:closeModal}]})}
+function openBuffs(){const b=pBuffs();modal({title:'当前状态',html:b.length?`<ul class="dlog" style="max-height:none;font-size:14px">${b.map(x=>`<li${x.bad?' style="color:var(--cinnabar)"':''}><b>${x.n}</b>（${x.s}）：${x.d}</li>`).join('')}</ul>`:'<p class="hint">身上没有任何药力或星辰加持。</p>',btns:[{t:'知道了',cls:'pri',fn:closeModal}]})}
 const _renderMain22=renderMain;
-renderMain=function(){_renderMain22();const pn=document.querySelector('.pcard .pname');const b=pBuffs();if(!pn||!b.length)return;const h=b.map(x=>`<button class="buff-ic buff" onclick="openBuffs()" title="${x.d}">${x.n}<b>${x.s}</b></button>`).join('');const first=pn.querySelector('.buff-ic');if(first)first.insertAdjacentHTML('beforebegin',h);else pn.insertAdjacentHTML('beforeend',h)};
+renderMain=function(){_renderMain22();const pn=document.querySelector('.pcard .pname');const b=pBuffs();if(!pn||!b.length)return;const h=`<button class="buff-ic buff star" onclick="openBuffs()" aria-label="当前状态 ${b.length} 项" title="当前状态（${b.length}）">✦${b.length>1?`<b>${b.length}</b>`:''}</button>`;const first=pn.querySelector('.buff-ic');if(first)first.insertAdjacentHTML('beforebegin',h);else pn.insertAdjacentHTML('beforeend',h)};
 // ---------- 2. 中元：入梦与辞别 ----------
 function startReborn(d){if(!d||d.status!=='dead'||d.rbDone||d.rebornSched)return;const ds=rbPlanOf(d)==='ds';d.rebornSched=true;d.rbType=ds?'ds':'zs';d.rbYear=G.date.y;G.reborn=G.reborn||[];
   G.reborn.push({id:d.id,due:ds?dn(G.date):dn({y:G.date.y+10,m:G.date.m,d:G.date.d}),type:d.rbType})}
@@ -7342,7 +7340,7 @@ const _zyBye23=EV.zyBye;
 EV.zyBye=e=>{const d=getD(e.id);if(d)d.byeDue=null;if(!e.night)return _zyBye23(e);const _m=modal;modal=function(o){if(o){o.title='入梦·辞别';if(o.html)o.html=o.html.replace(/中元夜，(.+?)来了。/,'这一夜不是中元，$1却入梦来了。')}return _m(o)};try{_zyBye23(e)}finally{modal=_m}};
 // —— 丹毒：药力框 ——
 const _pBuffs23=pBuffs;pBuffs=function(){const o=_pBuffs23();const n=G.p.pillM||0;if(n>0||G.p.toxM)o.push({n:'丹毒',s:G.p.toxM?'攻心':`${n}/50`,d:G.p.toxM?`本月已服丹 ${n} 枚，丹毒攻心：气血被压在两成以下，月初方消`:`本月已服丹 ${n} 枚，超过 50 枚会丹毒攻心（每月初清零）`,bad:G.p.toxM||n>=40});return o};
-const _renderMain23=renderMain;renderMain=function(){_renderMain23();document.querySelectorAll('.pname .buff-ic.buff').forEach(b=>{if(b.textContent.startsWith('丹毒')&&(G.p.toxM||(G.p.pillM||0)>=40))b.classList.add('anger')})};
+const _renderMain23=renderMain;renderMain=function(){_renderMain23();const st=document.querySelector('.pname .buff-ic.buff');if(st&&pBuffs().some(x=>x.bad))st.classList.add('anger')};
 // —— 弟子面板：突破率 / 丹毒 ——
 function dBrkInfo(d){if(d.realm>=44)return '已至大乘大圆满';let r=d.realm;while(r<44&&!BREAK[r])r++;if(!BREAK[r])return '—';const[base,name]=BREAK[r];const f=fx(d);let p=base+(f.brk||0);const k=bestPill(d.bag,'pj');const pj=k?PJ[+k.split(':')[2]]:0;
   return `${r===d.realm?'瓶颈 · ':''}冲击${name} ${Math.round(clamp(p+pj,0,1)*100)}%${pj?`（含囊中${itemInfo(k).name} +${Math.round(pj*100)}%）`:''}`}
@@ -8224,7 +8222,7 @@ function pbOn(k){return !!(G&&G.pb&&(G.pb[k]||0)>today())}
 function pbAdd(k,days){G.pb=G.pb||{};G.pb[k]=Math.max(G.pb[k]||0,today())+days}
 const lzN=()=>(G&&G.pb&&G.pb.lz_n)||0;
 const _pBuffs26=pBuffs;pBuffs=function(){const o=_pBuffs26();for(const k in PB)if(pbOn(k)){const left=G.pb[k]-today();o.push({n:PB[k].n,s:left>60?Math.round(left/30)+'月':left+'日',d:`【${PB[k].n}】${PB[k].d}（还剩约 ${left} 日）`})}
-  if(lzN()>0)o.push({n:'廉贞守命',s:lzN()+'次',d:`【廉贞守命】还可抵挡 ${lzN()} 次突破失败的后果`});return o};
+  if(lzN()>0)o.push({n:'廉贞守命',s:lzN()+'次',d:`【廉贞守命】还可抵挡 ${lzN()} 次意外死亡或突破失败（重伤将死时回复五成气血；动心致死不在此列）`});return o};
 const _addHeart26=addHeart;addHeart=function(v,d){if(v>0){if(pbOn('xrzs'))v*=.6;if(pbOn('dxcm'))v*=.9}return _addHeart26(v,d)};
 const _rawCrush26=rawCrush;rawCrush=function(d,v){if(v>0){if(pbOn('xrzs'))v*=.6;if(pbOn('dxcm'))v*=.9}return _rawCrush26(d,v)};
 const _evHeart26=EV.heart;EV.heart=function(e){if(!pbOn('xrzs'))return _evHeart26(e);delete G.pb.xrzs;G.ds.forEach(d=>d.crush=0);G.heartPending=false;G.queue=G.queue.filter(q=>q.k!=='heart');log('心如止水，化去了一场动心之劫。');
@@ -8283,7 +8281,7 @@ function showPoison(cont){const d=getD(G.sr&&G.sr.poison);if(G.sr)G.sr.poison=nu
   modal({title:'情毒',x:false,html:`<p class="prose">情花的香气钻进了${d.name}的经脉。${TA(d)}的呼吸越来越乱，眼尾烧得通红。<br><br>${fmt(pick(L),d)}</p><p class="hint">情毒不解，会反噬心脉。</p>`,btns:[
     {t:hy?`喂${itemInfo(hy).name}（约${[30,50,70,90][hg]}%）`:'（没有回元丹）',dis:!hy,fn:()=>{removeItem(G.bag,hy);if(chance([.3,.5,.7,.9][hg])){d.favor+=5;d.mood-=5;clampD(d);logD(d,'在情花海中了情毒，师尊喂了丹药，挺了过来。');done(pick(QH_PILL_OK))}else{killD(d,'在情花海中情毒反噬，身死道消。');done(pick(QH_PILL_FAIL))}}},
     {t:'亲自为'+TA(d)+'解毒',cls:'red',fn:()=>{addHeart(30,d);addLove(d,25);d.favor+=8;d.demon-=10;clampD(d);logD(d,'在情花海中了情毒，师尊亲自为'+TA(d)+'解了毒。');log(`情花海中，你亲自为${d.name}解了情毒。`);
-      const c=carrierOf(d);if(c&&!G.preg&&chance(.35))G.preg={carrier:c==='p'?'p':d.id,mate:d.id,days:0,kept:false};
+      const c=carrierOf(d);if(c&&!G.preg&&chance(pregP(d)))G.preg={carrier:c==='p'?'p':d.id,mate:d.id,days:0,kept:false};
       const jl=[];team.forEach(o=>{if(o.status!=='home'||o.age<18||o.love<60)return;addRel(o,d,-45);o.demon+=Math.round(25*(MB[o.mbti].dark||1));o.favor-=8;o.mood-=15;clampD(o);o.notes.push(`在情花海里，看见师尊为${sibName(o,d)}解毒`);jl.push(o.name)});
       done(pick(QH_CURE[st])+(jl.length?`<br><br><span style="color:var(--cinnabar)">${jl.join('、')}守在外头，一夜没有合眼。天亮时，看${d.name}的眼神冷得吓人。</span>`:''))}},
     {t:'不管',fn:()=>{if(chance(.4)){hurtD(d,30);d.favor-=15;d.demon+=10;clampD(d);logD(d,'在情花海中了情毒，师尊没有管，硬生生扛了过来。');done('{d}蜷在花丛里熬了一整夜。天亮时毒性退了，{ta}一句话也没有说，只是不再看你。')}else{killD(d,'在情花海中情毒发作，无人相救，身死道消。');done('你转过身去。身后的声音一点点弱下去，最后什么也听不见了。<br>花开得很好。')}}}]})}
@@ -8313,7 +8311,7 @@ function thunderRoot(){const r=G.p.root,old=rootName(r);let t='';
   else if(r.els.length>1){const n=Math.min(2,r.els.length-1);for(let i=0;i<n;i++)r.els.splice(ri(0,r.els.length-1),1);t=`雷火洗去了你两道杂根。${old} → <b>${rootName(r)}</b>。`;if(r.els.length===1)unlock('tianling')}
   else{if(chance(.4)){G.p.root={els:[pick(MUT)],mut:true};t=`雷火灌入天灵根，你的灵根变异了——<b>${rootName(G.p.root)}</b>。`}else t='雷火淬过你的天灵根，灵根更纯了些，却没有再变。'}
   log(t.replace(/<[^>]+>/g,''));return t}
-EV.ljPick=()=>{const ks=Object.keys(FAQI).filter(k=>!FAQI[k].use).sort((a,b)=>FAQI[b].g-FAQI[a].g);modal({title:'雷域遗宝',x:false,html:`<p class="prose">雷光散尽，渡劫台上浮起一排前人遗下的法器。你可以带走一件。</p><div class="items">${ks.map(k=>{const I=itemInfo('f:'+k);return `<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name}</div><div class="ds">${I.desc}</div></div><button class="btn sm" onclick="ljTake('${k}')">带走</button></div>`}).join('')}</div>`,btns:[]})};
+EV.ljPick=()=>{const ks=Object.keys(FAQI).filter(k=>!FAQI[k].use&&!FAQI[k].hide).sort((a,b)=>FAQI[b].g-FAQI[a].g);modal({title:'雷域遗宝',x:false,html:`<p class="prose">雷光散尽，渡劫台上浮起一排前人遗下的法器。你可以带走一件。</p><div class="items">${ks.map(k=>{const I=itemInfo('f:'+k);return `<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name}</div><div class="ds">${I.desc}</div></div><button class="btn sm" onclick="ljTake('${k}')">带走</button></div>`}).join('')}</div>`,btns:[]})};
 function ljTake(k){addItem(G.bag,'f:'+k);log(`在九天雷域带走了${itemInfo('f:'+k).name}。`);closeModal()}
 ACH.daoroot=ACH.daoroot||{n:'天道灵根',d:'在九天雷域中凝成天道灵根'};
 // ---------- 丹宗：丹药升品 ----------
@@ -8325,7 +8323,7 @@ const _openBag26=openBag;openBag=function(tab='p'){_openBag26(tab);if(tab!=='p'|
   it.querySelectorAll('.item').forEach(row=>{const b=row.querySelector('button[onclick^="usePill"]');if(!b)return;const k=(b.getAttribute('onclick').match(/'([^']+)'/)||[])[1];if(k&&canUp(k))b.insertAdjacentHTML('afterend',`<button class="btn sm" onclick="upPill('${k}')">升品</button>`)})};
 // ---------- 星图 ----------
 const STARS=[{k:'tl',n:'天枢·贪狼',x:262,y:38},{k:'jm',n:'天璇·巨门',x:252,y:104},{k:'lc',n:'天玑·禄存',x:180,y:116},{k:'wq',n:'天权·文曲',x:168,y:64},{k:'lz',n:'玉衡·廉贞',x:116,y:56},{k:'wqu',n:'开阳·武曲',x:70,y:48},{k:'pj',n:'摇光·破军',x:22,y:76}];
-const STAR_D={tl:PB.tl.d+'。持续两年',jm:PB.jm.d+'。持续两年',lc:PB.lc.d+'。持续两年',wq:PB.wq.d+'。持续两年',lz:'【廉贞守命】抵挡三次突破失败的后果：弟子不会陨落、不跌境；你突破失败不跌境',wqu:PB.wqu.d+'。持续两年',pj:PB.pj.d+'。持续两年'};
+const STAR_D={tl:PB.tl.d+'。持续两年',jm:PB.jm.d+'。持续两年',lc:PB.lc.d+'。持续两年',wq:PB.wq.d+'。持续两年',lz:'【廉贞守命】抵挡三次意外死亡与突破失败（师尊、弟子皆可）：重伤将死时回复五成气血；弟子突破失败不陨落、不跌境，你突破失败不跌境。动心致死不在此列',wqu:PB.wqu.d+'。持续两年',pj:PB.pj.d+'。持续两年'};
 const starLit=k=>k==='lz'?lzN()>0:pbOn(k);
 function openStars(){const b=G.starBones||0;const line=[0,1,2,3,0].map(i=>STARS[i]).concat([]);const path='M'+[0,1,2,3].map(i=>`${STARS[i].x},${STARS[i].y}`).join(' L')+' Z M'+[3,4,5,6].map(i=>`${STARS[i].x},${STARS[i].y}`).join(' L');
   modal({title:'星盘',html:`<div class="stars"><svg viewBox="0 0 300 140"><path d="${path}" stroke="#5a5f8a" stroke-width="1" fill="none" stroke-dasharray="3 3"/>${STARS.map(s=>{const on=starLit(s.k);return `<g class="st" onclick="lightStar('${s.k}')"><circle cx="${s.x}" cy="${s.y}" r="${on?7:5}" fill="${on?'#ffe9a8':'#6b6f8f'}" ${on?'style="filter:drop-shadow(0 0 6px #ffd76a)"':''}/><text class="lbl" x="${s.x}" y="${s.y+18}" text-anchor="middle">${s.n.split('·')[0]}</text></g>`}).join('')}</svg></div>
@@ -8434,8 +8432,8 @@ function pregMonth(P){return Math.min(10,Math.floor((P.days||0)/30)+1)}
 const pregOf=d=>{const P=G&&G.preg;return !!(P&&P.kept&&d&&P.carrier===d.id)};
 function pregRiskHtml(car){const P=G.preg,mo=pregMonth(P),left=Math.max(0,300-P.days);
   return `<p class="hint">已有身孕 <b>${mo}</b> 个月（怀胎十月），约 ${left} 日后临盆。</p><p class="hint"><b style="color:#c0607e">风险</b><br>`+(car
-   ?`· ${car.name}受伤时，有 30% 的可能小产：修为跌落一层、进度清零，心魔 +50，心情大跌。<br>· 临盆时约有 8% 的可能难产，${TA(car)}会因此陨落，只留下孩子。<br>· ${TA(car)}若离开师门或陨落，孩子也就没了。<br>· 这段时间少让${TA(car)}出门历练、受罚。`
-   :`· 你受伤时，有 30% 的可能小产：修为跌落一层、进度清零，${(getD(P.mate)||{}).name||'孩子的另一位'}心魔 +50。<br>· 临盆时约有 8% 的可能难产，<b style="color:var(--cinnabar)">一旦难产，你会身死道消（游戏结束）</b>。<br>· 这段时间尽量别去秘境、别与人争斗。`)+`</p>`}
+   ?`· ${car.name}受伤时，有 30% 的可能小产：修为跌落一层、进度清零，心魔 +50，心情大跌。<br>· 临盆时约有 ${Math.round(dystP(P)*100)}% 的可能难产，${TA(car)}会因此陨落，只留下孩子。<br>· ${TA(car)}若离开师门或陨落，孩子也就没了。<br>· 这段时间少让${TA(car)}出门历练、受罚。`
+   :`· 你受伤时，有 30% 的可能小产：修为跌落一层、进度清零，${(getD(P.mate)||{}).name||'孩子的另一位'}心魔 +50。<br>· 临盆时约有 ${Math.round(dystP(P)*100)}% 的可能难产，<b style="color:var(--cinnabar)">一旦难产，你会身死道消（游戏结束）</b>。<br>· 这段时间尽量别去秘境、别与人争斗。`)+`</p>`}
 function openPreg(){const P=G.preg;if(!P||!P.kept||P.carrier!=='p')return;const mate=getD(P.mate);
   modal({title:'身孕',html:`<p class="prose">你怀着${mate?mate.name:'那个人'}的孩子。</p><p class="big-c">${pregMonth(P)} 个月</p>${pregRiskHtml(null)}`,btns:[{t:'知道了',cls:'pri',fn:closeModal}]})}
 const _renderMain27=renderMain;renderMain=function(){_renderMain27();const P=G&&G.preg;if(!P||!P.kept||P.carrier!=='p')return;const pn=document.querySelector('.pcard .pname');
@@ -8444,4 +8442,99 @@ const _dCard27=dCard;dCard=function(d){let h=_dCard27(d);if(pregOf(d))h=h.replac
 const _openD27=openD;openD=function(id){_openD27(id);const d=getD(id);if(!pregOf(d))return;const kv=document.querySelector('#modal .kv');if(kv)kv.insertAdjacentHTML('afterend',`<div class="blk"><h4 style="color:#c0607e">有孕 · ${pregMonth(G.preg)} 个月</h4>${pregRiskHtml(d)}</div>`)};
 </script>
 <style>.buff-ic.preg{border-color:#c0607e;padding:0 6px}.preg-dot{display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid #c0607e;background:color-mix(in srgb,#c0607e 35%,transparent)}.tag.preg{background:#d9708f;color:#fff}.dcard.has-preg .tag:not(.preg){top:26px}</style>
+<script>
+// ================= v28：廉贞守命 / 状态星标 / 藏宝阁会员与代拍 / 送子观音 / 破厄玄天参 =================
+// ---------- 廉贞守命：抵挡意外死亡 ----------
+function lzSave(d,cause){if(!G||G.over||lzN()<=0)return false;G.pb.lz_n--;const who=d?d.name:'你';
+  if(d){d.hp=hpMax(d)*.5;logD(d,`${cause||'命悬一线'}之际，一点廉贞星光落下，护住了心脉。`)}else G.p.hp=hpMax(G.p)*.5;
+  log(`廉贞守命护住了${who}的性命（余 ${lzN()} 次）。`);
+  G.queue.push({k:'msg',title:'廉贞守命',html:`<p class="prose">${d?`${d.name}${cause==='难产'?'临盆时血崩不止':'伤重将死'}，气息一点点弱下去——`:`${cause==='难产'?'临盆时血崩不止':'你伤重将死'}，意识沉入黑暗的前一刻——`}<br>夜空里，北斗第五星忽然一亮。一缕星光穿过云层落下，稳稳托住了${d?TA(d)+'的':'你的'}魂魄。</p><p class="hint">气血回复至五成。廉贞守命还剩 ${lzN()} 次。</p>`});
+  try{save()}catch(e){}return true}
+// 弟子重伤将死（秘境、历练、比斗……）
+const _hurtD28=hurtD;hurtD=function(d,pct){if(d&&d.status!=='dead'&&lzN()>0&&hpOf(d)-hpMax(d)*pct/100<=0){lzSave(d,'重伤');return}return _hurtD28(d,pct)};
+// 久病不愈
+const _dDaily28=dDaily;dDaily=function(d){let pre;const guard=d&&d.sick&&G.date.d===1&&d.status!=='dead'&&lzN()>0&&hpOf(d)-hpMax(d)*.25<=0;if(guard){pre=d.hp;d.hp=hpMax(d)*.75}
+  const r=_dDaily28(d);if(guard){if(d.sick&&d.status!=='dead')lzSave(d,'久病');else d.hp=pre}return r};
+// 在外的意外
+const LZ_ACC=['在外遭遇不测，身死道消。','下山历练时遭遇魔修，身死道消。'];
+const _killD28=killD;killD=function(d,why){if(d&&d.status!=='dead'&&LZ_ACC.includes(why)&&lzSave(d,'遭遇不测')){const q=G.queue;q.push=function(...a){delete q.push;return Array.prototype.push.apply(q,a.filter(x=>!(x&&x.k==='msg'&&x.title==='噩耗')))};queueMicrotask(()=>{if(Object.prototype.hasOwnProperty.call(q,'push'))delete q.push});return}return _killD28(d,why)};
+// 师尊气血耗尽（动心致死不在此列）
+const _setEnding28=setEnding;setEnding=function(k,d){if(G&&!G.over&&HP_DEATH.includes(k)&&k!=='birth'&&lzSave(null,'重伤')){render();return}return _setEnding28(k,d)};
+// ---------- 状态星标样式 ----------
+// ---------- 送子观音 ----------
+FAQI.szgy={n:'送子观音',g:3,rare:true,hide:true};
+const SZGY_D='一尊羊脂白玉雕成的观音像，不过巴掌大，怀里抱着个胖乎乎的娃娃，眉眼慈悲。据说原是凡间香火最盛的一座庙里供奉的，不知怎么流落到了修仙界。拿在手里，温温的。';
+const _itemInfo28=itemInfo;itemInfo=function(k){const r=_itemInfo28(k);if(k==='f:szgy')r.desc=SZGY_D;if(k==='p:pe:3')r.price=6000;return r};
+const hasSzgy=d=>(G.p.eq||[]).includes('f:szgy')||!!(d&&(d.eq||[]).includes('f:szgy'));
+function pregP(d){return .35+(hasSzgy(d)?.3:0)}
+function dystP(P){const mate=P?getD(P.mate):null,car=P&&P.carrier!=='p'?getD(P.carrier):null;return hasSzgy(mate)||hasSzgy(car)?.02:.08}
+// ---------- 破厄玄天参 ----------
+PILLS.pe={n:'破厄玄天参',d:()=>'天劫落处才生得出的灵参，形如盘坐的老者，通体紫金，不可炼制。赠予妖族弟子，可破其【异道桎梏】，妖族弟子会因此对你感激涕零；人族服下，修为 +1000',p:6000,days:0,only:3,hidden:true};
+const PE_L={
+INTJ:SP(`（沉默地看着参须化作紫光没入丹田，许久才开口）……桎梏碎了。弟子算过无数种破法，唯独没算到会是师尊亲手递来。|这东西万金难求，您就这样给了一只妖。师尊，您让弟子……很难不对您另眼相看。`),
+INTP:SP(`等等，桎梏是一种天道规则，规则居然能被一株参抹掉？……弟子要重新推演一遍。不过在那之前——谢谢师尊。|（盯着自己的手看了半天）灵力的流向全变了，顺得离谱。师尊，弟子以后修炼的速度，可能会吓到您。`),
+ENTJ:SP(`桎梏一去，弟子再无掣肘。师尊，您今日这份恩，弟子要用整个修仙界来还。|（握紧拳头，妖纹一闪而逝）很好。从今往后，谁再说妖不配修人道，弟子便让他亲眼看着。`),
+ENTP:SP(`哈！天道给妖族上的锁，被师尊一根萝卜撬开了！……好好好，不是萝卜，是参，是参。|师尊，您知不知道您刚刚做了件多离经叛道的事？弟子太喜欢了。`),
+INFJ:SP(`（眼眶一点点红了）弟子一直以为，这身桎梏是妖族该受的。原来……也有人觉得我们不该受。|师尊，弟子会记得今天。记得是谁，把天道压在弟子身上的那块石头搬开了。`),
+INFP:SP(`（捧着空掉的玉匣哭得说不出话）弟子、弟子以为这辈子都要比别人慢一半了……|山里的老妖说，人族不会真心待妖。师尊，弟子要回去告诉他们，他们说错了。`),
+ENFJ:SP(`师尊！您知道这对一只妖意味着什么吗？……您知道的，所以您才给了弟子。|弟子要把这份恩情告诉万妖山脉的每一个族人——人族里，也有您这样的师尊。`),
+ENFP:SP(`（原地转了三圈，尾巴都冒出来了）轻了！整个身子都轻了！师尊师尊，弟子现在能飞起来！|呜哇——师尊您怎么对弟子这么好啊！弟子要抱您！不许躲！`),
+ISTJ:SP(`（郑重地跪下行了大礼）此恩，弟子记下了。往后修炼，弟子一日不敢懈怠。|桎梏已除。弟子会把从前落下的进度，一点一点补回来，不负师尊。`),
+ISFJ:SP(`这么贵重的东西……师尊该留着自己用的。（小声）可是弟子好开心，真的好开心。|弟子以后会更用心照顾师尊、照顾大家。这条命，从今天起就是师尊的了。`),
+ESTJ:SP(`好！桎梏一除，弟子这就去把落下的功课全部补齐。师尊放心，弟子不会让这株参白费。|宗门里那些说闲话的，弟子会用修为堵上他们的嘴。多谢师尊！`),
+ESFJ:SP(`师尊！弟子要给您做一桌好菜！不，十桌！……弟子太高兴了，都不知道该怎么谢您。|（拉着你的袖子不放）师尊，您待弟子这样好，弟子这辈子都不离开您了。`),
+ISTP:SP(`（活动了一下手腕，灵力在指尖噼啪作响）……好用。谢了，师尊。|（低头沉默了一会儿）弟子不太会说话。这份情，弟子用剑还。`),
+ISFP:SP(`（悄悄把参须系成的小结收进袖子里）这个弟子要留着。……师尊别笑。|身子里那层灰蒙蒙的东西不见了。师尊，弟子觉得，好像第一次看清了天是什么颜色。`),
+ESTP:SP(`哈哈哈！痛快！师尊，走，咱们现在就去找人打一架试试！|这下谁还敢说妖修半残？师尊，您这一手太帅了，弟子服了。`),
+ESFP:SP(`（一头扑进你怀里）师尊最好了！全天下最最好的师尊！|弟子要去山下摆三天流水席庆祝！师尊您坐主位，谁也不许跟您抢！`)};
+const PE_LOVE='<br><span class="hint">{d}看你的眼神，和从前不一样了。</span>';
+const _gainD28=gainD;gainD=function(d){const r=_gainD28(d);return d&&d.yao&&d.yaoFree?r*2:r};
+const _giveItem28=giveItem;giveItem=function(id,k,quiet){if(k!=='p:pe:3')return _giveItem28.apply(this,arguments);const d=getD(id);if(!d||!countItem(G.bag,k))return;const before=snap(d),I=itemInfo(k);
+  if(d.child&&d.age<3)return toast(`${d.name}还太小，不能收东西`);
+  removeItem(G.bag,k);let line;
+  if(d.yao&&!d.yaoFree){d.yaoFree=true;d.fates=d.fates.filter(f=>f!=='ydzg');d.favor+=35;d.mood+=25;d.demon-=15;if(d.age>=18&&!d.child){d.love=clamp((d.love||0)+25,0,100);addHeart(4,d)}
+    line=fmt(pick(PE_L[d.mbti]||PE_L.INFP),d)+(d.age>=18&&!d.child&&d.love>=50?fmt(PE_LOVE,d):'');logD(d,'服下师尊所赠的破厄玄天参，异道桎梏尽碎。');log(`${d.name}服下破厄玄天参，破除了妖族的异道桎梏。`);unlock('pe1')}
+  else{addDXP(d,1000);d.favor+=8;line=fmt(d.yao?'（桎梏早已不在，参中的灵力化作了修为）谢谢{s}！':'（服下后浑身灵气翻涌）好、好浓的灵力……谢谢{s}！',d);logD(d,'服下师尊所赠的破厄玄天参，修为大进。')}
+  clampD(d);save();giftPicker(id,line,deltaText(before,d),I.name)};
+const _usePill28=usePill;usePill=function(k){const I=itemInfo(k);if(I.type==='p'&&I.kind==='pe'){if(!removeItem(G.bag,k))return;addPXP(1000);if(typeof pillCount==='function')pillCount(null,1);log('服下破厄玄天参，修为 +1000。');toast('服下破厄玄天参，修为 +1000');save();return openBag('p')}return _usePill28(k)};
+Object.assign(ACH,{pe1:{n:'破厄',d:'用破厄玄天参为妖族弟子破除桎梏'},vip:{n:'藏宝阁上宾',d:'在藏宝阁累计消费一万灵玉，得赐紫金万宝令'}});
+// ---------- 藏宝阁：会员 / 代拍 ----------
+const VIP_NEED=10000;
+const cbg=()=>{G.cbg=G.cbg||{spent:0,vip:false,res:0};return G.cbg};
+const isVip=()=>!!(G&&cbg().vip);
+const shopPrice=I=>isVip()?Math.round(I.price*.95):I.price;
+const sellRate=()=>isVip()?.5:.3;
+function cbgSpend(v){if(v<=0)return;const c=cbg();c.spent+=v;if(!c.vip&&c.spent>=VIP_NEED){c.vip=true;unlock('vip');log('藏宝阁奉上紫金万宝令，你成了藏宝阁的上宾。');
+  G.queue.push({k:'msg',title:'紫金万宝令',html:`<p class="prose">藏宝阁的掌柜亲自登门，双手奉上一块紫金令牌，上头錾着「万宝」二字。<br>“仙长在本阁累计惠顾已逾一万灵玉，从今往后便是本阁上宾。”</p><p class="hint">· 平日购物九五折<br>· 卖给藏宝阁的东西按五成收（原为三成）<br>· 可在藏宝阁【预留灵玉】，双十一时由藏宝阁代为竞拍，拍得之物寄到信笺里</p>`})}}
+openShop=function(tab){tab=tab||'buy';const c=cbg(),vip=c.vip,rate=sellRate();
+  const head=`<div class="tabs"><button class="${tab==='buy'?'on':''}" onclick="openShop('buy')">买</button><button class="${tab==='sell'?'on':''}" onclick="openShop('sell')">卖</button></div><p class="hint">灵玉 ${G.p.jade}。${tab==='buy'?`货品每月初更换。${vip?'上宾九五折。':''}`:`按${vip?'五':'三'}成价格收购。`}<br>${vip?`<span style="color:#8a6a1e">✦ 紫金万宝令 · 藏宝阁上宾</span>${c.res?` · 预留 ${c.res} 灵玉`:''}`:`累计消费 ${c.spent}/${VIP_NEED} 灵玉，满额可得【紫金万宝令】`}</p>`;
+  const body=tab==='buy'?`<div class="items">${G.shop.map((x,i)=>{const I=itemInfo(x.k),pr=shopPrice(I);return `<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name}</div><div class="ds">${I.desc}</div></div><span class="ct">余${x.n}</span><button class="btn sm" ${x.n<=0||G.p.jade<pr?'disabled':''} onclick="buy(${i})">${vip&&pr!==I.price?`<s style="opacity:.5">${I.price}</s> `:''}${pr}灵玉</button></div>`}).join('')}</div>`
+   :`<div class="items">${G.bag.length?G.bag.map(x=>{const I=itemInfo(x.k),v=Math.round(I.price*rate);return `<div class="item"><div class="info"><div class="nm">${gd(I.g)}${I.name} <span class="ct">×${x.n}</span></div><div class="ds">单价 ${v} 灵玉</div></div><button class="btn sm" onclick="sellIt('${x.k}')">卖1</button>${x.n>1?`<button class="btn sm" onclick="sellIt('${x.k}',1)">全卖 ${v*x.n}</button>`:''}</div>`}).join(''):'<p class="hint">乾坤囊空空如也。</p>'}</div>`;
+  modal({title:'藏宝阁',html:head+body,btns:[{t:'离开',cls:'pri',fn:closeModal}]});
+  if(vip){const h=document.querySelector('#modal .sheet-h');if(h){const x=h.querySelector('.x');const b=`<button class="btn sm res-btn" onclick="openReserve()">预留灵玉</button>`;if(x)x.insertAdjacentHTML('beforebegin',b);else h.insertAdjacentHTML('beforeend',b)}}};
+buy=function(i){const x=G.shop[i],I=itemInfo(x.k),pr=shopPrice(I);if(G.p.jade<pr||x.n<=0)return;const had=G.bag.some(y=>y.k===x.k);if(!had&&G.bag.length>=bagCap(G.bag))return toast('乾坤囊已满，先腾出格子吧');G.p.jade-=pr;x.n--;addItem(G.bag,x.k);cbgSpend(pr);toast(`买下${I.name}`);save();openShop('buy');if(G.queue.length&&!G.feast){}};
+sellIt=function(k,all){const I=itemInfo(k);const n=all?countItem(G.bag,k):1;if(!removeItem(G.bag,k,n))return;const v=Math.round(I.price*sellRate())*n;G.p.jade+=v;toast(`卖出${I.name}×${n}，灵玉 +${v}`);save();openShop('sell')};
+const _bid28=bid;bid=function(e,l,mul){const j=G.p.jade;_bid28(e,l,mul);cbgSpend(j-G.p.jade)};
+function openReserve(){const c=cbg();modal({title:'预留灵玉',html:`<p class="prose">把灵玉存在藏宝阁，双十一大促开拍时，掌柜会替你出手，能拍多少拍多少，拍到的东西随信寄到你的信笺里。没花完的，继续替你留着。</p>
+  <dl class="kv"><dt>已预留</dt><dd><b>${c.res}</b> 灵玉</dd><dt>身上灵玉</dt><dd>${G.p.jade}</dd></dl>
+  <div class="field"><label class="l" for="res-n">数额</label><input type="number" id="res-n" min="0" step="100" value="${Math.min(1000,G.p.jade)}"></div>
+  <p class="hint">藏宝阁代拍不挑东西，随机下手，出价比你亲自去略高一点。</p>`,
+  btns:[{t:'返回',fn:()=>openShop('buy')},{t:'取回',dis:c.res<=0,fn:()=>resMove(-1)},{t:'存入',cls:'pri',dis:G.p.jade<=0,fn:()=>resMove(1)}]})}
+function resMove(dir){const c=cbg();let n=Math.floor(+((document.getElementById('res-n')||{}).value||0));if(!(n>0))return toast('填个数额吧');
+  if(dir>0){n=Math.min(n,G.p.jade);G.p.jade-=n;c.res+=n;log(`在藏宝阁预留了 ${n} 灵玉。`);toast(`预留 ${n} 灵玉`)}else{n=Math.min(n,c.res);c.res-=n;G.p.jade+=n;log(`从藏宝阁取回 ${n} 灵玉。`);toast(`取回 ${n} 灵玉`)}save();openReserve()}
+// 双十一：每年 4～8 件，加入送子观音、破厄玄天参；会员代拍
+const LOT_EXTRA=()=>[{k:randFaqi(3),b:3000},{k:'p:xs:3',b:1500},{k:'p:pj:3',b:1200},{k:'p:jq:3',b:900},{k:'p:yh:0',b:250,n:3},{k:randFaqi(2),b:900},{k:'p:wq:3',b:1000},{k:'p:jx:3',b:800},{k:'f:ssj',b:1500},{k:'p:hy:3',b:500},{k:randFaqi(2),b:1000},{k:'p:sw:3',b:800}];
+const _genLots28=genLots;genLots=function(){const L=_genLots28();const want=ri(4,8);
+  const special=[];if(chance(.35))special.push({k:'f:szgy',b:5000});if(chance(.35))special.push({k:'p:pe:3',b:4000});
+  special.forEach(x=>{if(L.length<want)L.push(x);else L[ri(0,L.length-1)]=x});
+  const pool=LOT_EXTRA().sort(()=>R()-.5);while(L.length<want&&pool.length)L.push(pool.pop());
+  L.forEach(l=>{l.n=l.n||1;if(l.price==null)l.price=l.b;if(l.val==null)l.val=Math.round(l.price*(1.05+R()*.35));if(l.lead===undefined)l.lead=null;l.sold=!!l.sold;lotBase(l)});
+  L.sort(()=>R()-.5);try{autoBid(L)}catch(e){}return L};
+function autoBid(L){const c=cbg();if(!c.vip||c.res<=0)return;const got=[];let spent=0;
+  [...L].sort(()=>R()-.5).forEach(l=>{if(l.sold)return;const pr=Math.round(lotBase(l)*(1.05+R()*.25)/10)*10;if(c.res<pr)return;c.res-=pr;spent+=pr;l.sold=true;l.lead='藏宝阁代拍';l.price=pr;addItem(G.bag,l.k,l.n);got.push(`${itemInfo(l.k).name}${l.n>1?'×'+l.n:''}（${pr}）`)});
+  cbgSpend(spent);G.nmail=(G.nmail||0)+1;
+  G.mail.unshift({id:G.nmail,t:dateStr(),from:'藏宝阁',career:'紫金万宝令',html:got.length?`<p>上宾台鉴：</p><p>今岁双十一大促，本阁已按您的嘱托代为竞拍，共拍得 ${got.length} 件，花费 ${spent} 灵玉，随信奉上。余下 ${c.res} 灵玉仍为您留在阁中。</p>`:`<p>上宾台鉴：</p><p>今岁双十一大促，拍品价高，您预留的 ${c.res} 灵玉一件也未能拍下，仍为您留在阁中。</p>`,att:got.length?got.join('、'):'无',replied:false});
+  if(G.mail.length>80)G.mail.length=80;G.newMail=(G.newMail||0)+1;G.mailBadge=true;log(got.length?`藏宝阁代拍得 ${got.length} 件宝物，已随信寄到。`:'藏宝阁代拍一无所获。')}
+</script>
+<style>.buff-ic.star{font-size:13px;color:#b08a2e;border-color:#b08a2e}.buff-ic.star.anger{color:var(--cinnabar);border-color:var(--cinnabar)}.res-btn{margin-left:auto;margin-right:8px;border-color:#b08a2e;color:#8a6a1e}</style>
 </body></html>
